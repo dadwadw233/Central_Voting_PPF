@@ -61,6 +61,8 @@ class CentralVoting {
 
   bool CenterExtractor(int index = 0);
 
+  void InitTripleSet();
+
   void GenerateBound();
 
   void DownSample();
@@ -78,6 +80,7 @@ class CentralVoting {
   int maxModelNum = 10;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr scene;
   std::vector<pcl::PointCloud<pcl::PointXYZ>::ConstPtr> model_set;
+  std::vector<std::vector<pcl::PointXYZ>>triple_set;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr scene_subsampled;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr model_subsampled;
 };

@@ -14,15 +14,7 @@ bool CentralVoting::CenterExtractor(int index) {
     p.x = center(0);
     p.y = center(1);
     p.z = center(2);
-    pcl::PointCloud<pcl::PointXYZ>::Ptr c(new pcl::PointCloud<pcl::PointXYZ>());
-    c->points.push_back(p);
-
     pcl::visualization::PCLVisualizer view("model with center point");
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(c, 255,
-                                                                        0, 0);
-    view.addPointCloud(c, red, "center");
-    view.setPointCloudRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "center");
 
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> model_color(
         255, 255, 255);
@@ -38,7 +30,6 @@ bool CentralVoting::CenterExtractor(int index) {
     std::vector<float> eccentricity;
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
-    float major_value, middle_value, minor_value;
     Eigen::Vector3f major_vector, middle_vector, minor_vector;
     Eigen::Vector3f mass_center;
     feature_extractor.getAABB(min_point_AABB, max_point_AABB);
@@ -48,6 +39,10 @@ bool CentralVoting::CenterExtractor(int index) {
     view.addCube(min_point_AABB.x, max_point_AABB.x, min_point_AABB.y,
                  max_point_AABB.y, min_point_AABB.z, max_point_AABB.z, 1.0, 1.0,
                  0.0, "AABB");
+    double d_obj = std::sqrt(std::pow(max_point_AABB.x - min_point_AABB.x, 2) +
+                             std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
+                             std::pow(max_point_AABB.z - min_point_AABB.z, 2));
+
     view.setShapeRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_REPRESENTATION,
         pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "AABB");
@@ -65,8 +60,26 @@ bool CentralVoting::CenterExtractor(int index) {
     view.addLine(center_, y_axis, 0.0f, 1.0f, 0.0f, "middle eigen vector");
     view.addLine(center_, z_axis, 0.0f, 0.0f, 1.0f, "minor eigen vector");
 
-    view.addCoordinateSystem(100, mass_center(0), mass_center(1),
-                             mass_center(2));
+    pcl::PointXYZ p_faux(center_);
+    pcl::PointXYZ p_saux(center_);
+    std::vector<pcl::PointXYZ> triple;
+    p_faux.x -= static_cast<float>(d_obj);
+    p_saux.y -= static_cast<float>(d_obj);
+    this->InitTripleSet();
+    this->triple_set[index].push_back(center_);
+    this->triple_set[index].push_back(p_faux);
+    this->triple_set[index].push_back(p_saux);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr triple_cloud(
+        new pcl::PointCloud<pcl::PointXYZ>());
+    triple_cloud->points.push_back(center_);
+    triple_cloud->points.push_back(p_faux);
+    triple_cloud->points.push_back(p_saux);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+        triple_cloud, 255, 0, 0);
+    view.addPointCloud(triple_cloud, red, "triple");
+    view.setPointCloudRenderingProperties(
+        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "triple");
 
     while (!view.wasStopped()) {
       view.spinOnce(100);
@@ -74,6 +87,10 @@ bool CentralVoting::CenterExtractor(int index) {
     }
   }
 }
+void CentralVoting::InitTripleSet() {
+  this->triple_set.resize(this->model_set.size());
+}
+
 bool CentralVoting::AddModel(
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_model) {
   if (this->model_set.size() > maxModelNum) {
