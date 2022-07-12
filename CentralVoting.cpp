@@ -18,8 +18,8 @@ bool CentralVoting::CenterExtractor(int index) {
     c->points.push_back(p);
 
     pcl::visualization::PCLVisualizer view("model with center point");
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(c, 0,
-                                                                        255, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(c, 255,
+                                                                        0, 0);
     view.addPointCloud(c, red, "center");
     view.setPointCloudRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "center");
