@@ -19,6 +19,6 @@ int main(int argc, char** argv) {
   reader.read(argv[1], *model);
 
   CentralVoting handle(model);
-  handle.CenterExtractor();
+  handle.CenterExtractorAll();
   return 0;
 }

@@ -16,72 +16,81 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
+#include <pcl/features/fpfh.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/registration/ia_ransac.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <Eigen/Core>
+#include <fstream>
+#include <limits>
+#include <pcl/search/impl/search.hpp>
 #include <utility>
+#include <vector>
+#include "Eigen/Core"
 #include "HashMap.h"
 #include "pcl/console/print.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_representation.h"
 #include "pcl/registration/registration.h"
 #include "pcl/visualization/cloud_viewer.h"
-#include <limits>
-#include <fstream>
-#include <vector>
-#include <Eigen/Core>
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/fpfh.h>
-#include <pcl/registration/ia_ransac.h>
-#include <pcl/visualization/cloud_viewer.h>
-#include <pcl/search/impl/search.hpp>
-#include <pcl/features/moment_of_inertia_estimation.h>
-#include "Eigen/Core"
 
 class CentralVoting {
  public:
-  CentralVoting(pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_scene,
-                pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_model)
+  CentralVoting(pcl::PointCloud<pcl::PointXYZ>::Ptr input_scene,
+                pcl::PointCloud<pcl::PointXYZ>::Ptr input_model)
       : scene(std::move(input_scene)) {
     model_set.push_back(std::move(input_model));
   }
-  CentralVoting(
-      pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_scene,
-      std::vector<pcl::PointCloud<pcl::PointXYZ>::ConstPtr> input_models)
+  CentralVoting(pcl::PointCloud<pcl::PointXYZ>::Ptr input_scene,
+                std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> input_models)
       : scene(std::move(input_scene)), model_set(std::move(input_models)) {}
 
-  explicit CentralVoting(pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_model) {
+  explicit CentralVoting(pcl::PointCloud<pcl::PointXYZ>::Ptr input_model) {
     this->model_set.push_back(std::move(input_model));
   }
 
-  bool AddModel(pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_model);
+  bool AddModel(pcl::PointCloud<pcl::PointXYZ>::Ptr input_model);
 
-  bool CenterExtractor(int index = 0);
+  pcl::PointCloud<pcl::PointNormal>::Ptr getPointNormal(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud);
+
+  bool CenterExtractorAll();
 
   void InitTripleSet();
 
-  void GenerateBound();
+  void GenerateBound(pcl::PointCloud<pcl::PointXYZ>::ConstPtr &input_cloud,
+                     pcl::PointXYZ &max_point, pcl::PointXYZ &min_point);
 
-  void DownSample();
+  pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
-  void EstablishPPF();
+  void SimpleDownSample(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
+
+  void EstablishPPF(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
   void EstablishHashMap();
 
   void EstablishLRF();
 
+  void test();  //测试入口函数
+
   CentralVoting &operator=(const CentralVoting &) = delete;
   CentralVoting(const CentralVoting &) = delete;
 
  private:
+  void CenterExtractor(int index = 0);
   int maxModelNum = 10;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr scene;
-  std::vector<pcl::PointCloud<pcl::PointXYZ>::ConstPtr> model_set;
-  std::vector<std::vector<pcl::PointXYZ>>triple_set;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr scene_subsampled;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr model_subsampled;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr scene;
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> model_set;
+  std::vector<std::vector<pcl::PointXYZ>> triple_set;
+  pcl::PointCloud<pcl::PointNormal>::Ptr scene_subsampled;
+  pcl::PointCloud<pcl::PointNormal>::Ptr model_subsampled;
 };
 #endif  // CENTRAL_VOTING_CENTRALVOTING_H

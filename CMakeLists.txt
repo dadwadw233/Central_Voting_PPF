@@ -17,6 +17,8 @@ add_executable(central_voting
         main.cpp
         CentralVoting.h
         CentralVoting.cpp
+        SmartDownSample.cpp
+        SmartDownSample.h
         )
 
 target_link_libraries(central_voting ${PCL_LIBRARIES})
