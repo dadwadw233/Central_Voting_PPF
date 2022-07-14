@@ -133,7 +133,6 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
                                 static_cast<const Eigen::Vector3f>(
                                     map[i]->points[k].normal),
                                 true) >= this->angleThreshold) {
-              PCL_INFO("!!!");
               if (!flag[j]) {
                 flag[j] = true;
 #pragma omp critical
