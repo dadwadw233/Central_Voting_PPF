@@ -27,13 +27,26 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <Eigen/Core>
 #include <boost/thread/thread.hpp>
-#include <iostream>
 #include <thread>
 #include "pcl/filters/filter.h"
 #include "pcl/features/moment_of_inertia_estimation.h"
 #include "pcl/impl/point_types.hpp"
 #include "pcl/features/normal_3d.h"
+#include "pcl/features/normal_3d_omp.h"
 #include "pcl/search/kdtree.h"
+#include <pcl/features/fpfh_omp.h> //包含fpfh加速计算的omp(多核并行计算)
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection_features.h> //特征的错误对应关系去除
+#include <pcl/registration/correspondence_rejection_sample_consensus.h> //随机采样一致性去除
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/features/integral_image_normal.h>
+#include <iostream>
+
+#include <pcl/console/parse.h>
+#include <pcl/common/transforms.h>
+
+#include <pcl/common/common.h>
 class SmartDownSample {
  public:
   SmartDownSample(const pcl::PointCloud<pcl::PointXYZ>::Ptr  & input_cloud,
