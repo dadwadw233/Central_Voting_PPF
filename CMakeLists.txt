@@ -12,6 +12,7 @@ if(OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+
 include_directories(${EIGEN3_INCLUDE_DIRS})
 
 include_directories(${PCL_INCLUDE_DIRS})
@@ -28,7 +29,7 @@ add_executable(central_voting
         SmartDownSample.h
         )
 
-target_link_libraries(central_voting ${PCL_LIBRARIES})
+target_link_libraries(central_voting ${PCL_LIBRARIES} tbb)
 
 
 

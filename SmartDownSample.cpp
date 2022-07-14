@@ -108,12 +108,59 @@ std::cout<<this->input_cloud->points.size();//24325
   PCL_INFO("\nfinish store point\n");
 
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr down_sampled_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-//#pragma omp parallel for shared(map,down_sampled_cloud) default(none) num_threads(15)
+#pragma omp parallel for shared(map,output_cloud) default(none) num_threads(15)
   for ( int i = 0; i < map.size(); i++) {
+    int cnt = 0;
+    if(map[i]->points.empty()){
+      continue;
+    }else if(map[i]->points.size()==1){
+#pragma omp critical
+      output_cloud->points.push_back(map[i]->points[0]);
+      continue;
+    }else{
+      bool flag[map[i]->points.size()];
 
-
+      for(int p = 0;p<map[i]->points.size();p++){
+        flag[p] = false;
+      }
+      for(int j = 0;j<map[i]->points.size();j++){
+        if(cnt == map[i]->points.size()){
+          break;
+        }
+        for(int k = 0 ;k<map[i]->points.size();k++){
+          if(j==k){
+            continue;
+          }else if(flag[j]&&flag[k]){
+            continue;
+          }else{
+            if(pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
+                                    map[i]->points[j].normal),
+                                static_cast<const Eigen::Vector3f>(
+                                    map[i]->points[k].normal),true)>=this->angleThreshold){
+              if(!flag[j]){
+                flag[j]=true;
+#pragma omp critical
+                output_cloud->points.push_back(map[i]->points[j]);
+                cnt++;
+              }
+              if(!flag[k]){
+                flag[k] = true;
+#pragma omp critical
+                output_cloud->points.push_back(map[i]->points[k]);
+                cnt++;
+              }
+            }
+          }
+        }
+      }
+    }
+    if(cnt == 0){
+#pragma omp critical
+      output_cloud->points.push_back(map[i]->points[0]);
+    }
   }
+  PCL_INFO("\ndown sample finish\n");
+  std::cout<<output_cloud->points.size()<<std::endl;
   return output_cloud;
 }
 

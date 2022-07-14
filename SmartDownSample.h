@@ -42,7 +42,7 @@
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/features/integral_image_normal.h>
 #include <iostream>
-
+#include <tbb/concurrent_vector.h>
 #include <pcl/console/parse.h>
 #include <pcl/common/transforms.h>
 
