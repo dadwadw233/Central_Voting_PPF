@@ -65,7 +65,7 @@ class CentralVoting {
 
   void InitTripleSet();
 
-  void GenerateBound(pcl::PointCloud<pcl::PointXYZ>::ConstPtr &input_cloud,
+  static void GenerateBound(const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
                      pcl::PointXYZ &max_point, pcl::PointXYZ &min_point);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(

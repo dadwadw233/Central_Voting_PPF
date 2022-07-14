@@ -2,7 +2,7 @@
 // Created by yyh on 22-7-11.
 //
 #include "CentralVoting.h"
-
+#include "SmartDownSample.h"
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -23,7 +23,8 @@ void CentralVoting::CenterExtractor(int index) {
   feature_extractor.getAABB(min_point_AABB, max_point_AABB);
   feature_extractor.getEigenVectors(major_vector, middle_vector, minor_vector);
   feature_extractor.getMassCenter(mass_center);
-  std::cout<<"min_point:"<<min_point_AABB<<std::endl<<"max_point:"<<max_point_AABB<<std::endl;
+  std::cout << "min_point:" << min_point_AABB << std::endl
+            << "max_point:" << max_point_AABB << std::endl;
   pcl::visualization::PCLVisualizer view("model with center point");
 
   pcl::PointXYZ center_(mass_center(0), mass_center(1), mass_center(2));
@@ -83,8 +84,18 @@ void CentralVoting::CenterExtractor(int index) {
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
 }
+
 pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {}
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
+  pcl::PointXYZ max_point, min_point;
+  GenerateBound(input_cloud, max_point, min_point);
+  SmartDownSample sample_filter(
+      input_cloud, std::make_pair(min_point.x, max_point.x),
+      std::make_pair(min_point.y, max_point.y),
+      std::make_pair(min_point.z, max_point.z), 0.5, 20, 0.01);
+  sample_filter.setRadius(0.05f);
+  return sample_filter.compute();
+}
 
 void CentralVoting::EstablishPPF(
     pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
@@ -94,7 +105,7 @@ void CentralVoting::test() {
   this->model_subsampled = DownSample(this->model_set[0]);
 }
 void CentralVoting::GenerateBound(
-    pcl::PointCloud<pcl::PointXYZ>::ConstPtr &input_cloud,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
     pcl::PointXYZ &max_point, pcl::PointXYZ &min_point) {
   pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
   feature_extractor.setInputCloud(input_cloud);

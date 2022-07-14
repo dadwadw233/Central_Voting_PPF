@@ -40,7 +40,7 @@ class SmartDownSample {
                   const std::pair<double, double> x_range,
                   const std::pair<double, double> y_range,
                   const std::pair<double, double> z_range, const float &step,
-                  const float angleThreshold, const float &distanceThreshold)
+                  const float &angleThreshold, const float &distanceThreshold)
       : input_cloud(input_cloud),
         x_range(x_range),
         y_range(y_range),
@@ -59,6 +59,8 @@ class SmartDownSample {
   template <class T>
   float calculateDistance(T& pointA, T&pointB);
 
+  template <class T>
+  float calculateDistance(T& pointA, pcl::PointNormal &pointB);
  private:
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_cloud;
   std::pair<double, double> x_range;
