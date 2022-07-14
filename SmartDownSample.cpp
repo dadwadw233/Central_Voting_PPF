@@ -9,7 +9,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   pcl::PointCloud<pcl::PointNormal>::Ptr output_cloud(
       new pcl::PointCloud<pcl::PointNormal>());
 
-  std::vector<std::vector<int>>
+  std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>
       map;  // define the voxel grid , store the index of the point in cloud
   PCL_INFO("\nstart map init\n");
 
@@ -25,9 +25,22 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   auto y_num = static_cast<long long int>(std::ceil(yr / this->step));
   auto z_num = static_cast<long long int>(std::ceil(zr / this->step));
 
+
   map.resize(x_num * y_num * z_num);
 
+#pragma omp parallel shared(map) default (none)
+  {
+#pragma omp for
+    for(int i = 0;i<map.size();i++){
+#pragma omp critical
+      map[i].reset(new pcl::PointCloud<pcl::PointXYZ>());
+    }
+  }
+
+  #pragma omp barrier
   PCL_INFO("\nfinish map init\n");
+
+#pragma omp parallel for shared(map,x_num,y_num) default(none) num_threads(15)
   for (int i = 0; i < this->input_cloud->points.size(); i++) {
     const int xCell =
         static_cast<int>(std::ceil(
@@ -53,31 +66,42 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
     const int index =
         (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
 
-   // std::cout << index << std::endl;
+    //std::cout << index << std::endl;
     // store the index;
-    map[index].push_back(i);
+#pragma omp critical
+    map[index]->points.push_back(this->input_cloud->points[i]);
   }
-  PCL_INFO("finish store point");
 
-  int i,j,k;
-//#pragma omp parallel private(i,j,k)
-  for ( i = 0; i < map.size(); i++) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr temp(
-        new pcl::PointCloud<pcl::PointXYZ>());
-    for ( j = 0; j < map[i].size(); j++) {
-      temp->points.push_back(this->input_cloud->points[map[i][j]]);
+#pragma omp barrier
+
+int sum = 0;
+  for(int i = 0;i<map.size();i++){
+    if(!map[i]->points.empty()){
+      sum+=map[i]->points.size();
     }
+    if(map[i]->points.size()>1){
+      std::cout<<map[i]->points.size()<<std::endl;
+    }
+  }
+std::cout<<sum<<std::endl;
+std::cout<<this->input_cloud->points.size();//24325
+
+  PCL_INFO("\nfinish store point\n");
+
+
+  for ( int i = 0; i < map.size(); i++) {
+
     pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
-    feature_extractor.setInputCloud(temp);
+    feature_extractor.setInputCloud(map[i]);
     feature_extractor.compute();
     Eigen::Vector3f mass_center;
     feature_extractor.getMassCenter(mass_center);
     pcl::PointXYZ center(mass_center(0), mass_center(1), mass_center(2));
-    temp->points.push_back(center);
+    map[i]->points.push_back(center);
     pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(
         new pcl::PointCloud<pcl::Normal>());
     pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
-    normal_estimation_filter.setInputCloud(temp);
+    normal_estimation_filter.setInputCloud(map[i]);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
         new pcl::search::KdTree<
             pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
@@ -87,9 +111,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
 
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
         new pcl::PointCloud<pcl::PointNormal>());
-    concatenateFields(*temp, *cloud_subsampled_normals,
+    concatenateFields(*map[i], *cloud_subsampled_normals,
                       *cloud_subsampled_with_normals);
-    for ( k = 0; k < cloud_subsampled_with_normals->points.size(); k++) {
+    for ( int k = 0; k < cloud_subsampled_with_normals->points.size(); k++) {
       if (calculateDistance(center, cloud_subsampled_with_normals->points[k]) <
           distanceThreshold) {
       }

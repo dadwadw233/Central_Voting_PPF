@@ -92,7 +92,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   SmartDownSample sample_filter(
       input_cloud, std::make_pair(min_point.x, max_point.x),
       std::make_pair(min_point.y, max_point.y),
-      std::make_pair(min_point.z, max_point.z), 0.5, 20, 0.01);
+      std::make_pair(min_point.z, max_point.z), 1, 20, 0.01);
   sample_filter.setRadius(0.05f);
   return sample_filter.compute();
 }
