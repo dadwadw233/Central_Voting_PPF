@@ -93,7 +93,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
       input_cloud, std::make_pair(min_point.x, max_point.x),
       std::make_pair(min_point.y, max_point.y),
       std::make_pair(min_point.z, max_point.z), 1, 20, 0.01);
-  sample_filter.setRadius(0.05f);
+  sample_filter.setRadius(1.0f);
   return sample_filter.compute();
 }
 
@@ -103,6 +103,16 @@ void CentralVoting::EstablishPPF(
 }
 void CentralVoting::test() {
   this->model_subsampled = DownSample(this->model_set[0]);
+  pcl::visualization::PCLVisualizer view("subsampled point cloud");
+  view.setBackgroundColor(0,0,0);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
+      this->model_subsampled, 255, 0, 0);
+  view.addPointCloud(this->model_subsampled,red,"cloud");
+  view.addPointCloudNormals<pcl::PointNormal>(this->model_subsampled,10,0.5,"cloud with normal");
+  while (!view.wasStopped()) {
+    view.spinOnce(100);
+    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+  }
 }
 void CentralVoting::GenerateBound(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
