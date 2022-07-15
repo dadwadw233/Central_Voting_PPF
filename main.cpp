@@ -21,9 +21,9 @@ int main(int argc, char** argv) {
 
   CentralVoting handle(model);
   // handle.CenterExtractorAll();
-  handle.setNormalEstimationRadius(5.0f);
-  handle.setDownSampleStep(5.0f);
-  handle.setAngleThreshold(55);
+  handle.setNormalEstimationRadius(10.0f);
+  handle.setDownSampleStep(10.0f);
+  handle.setAngleThreshold(30);
   handle.test();
   return 0;
 }
