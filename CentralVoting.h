@@ -74,7 +74,7 @@ class CentralVoting {
 
   void SimpleDownSample(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
-  void EstablishPPF(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
+  void Solve();
 
   void EstablishHashMap();
 
@@ -97,7 +97,6 @@ class CentralVoting {
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> model_set;
   std::vector<std::vector<pcl::PointXYZ>> triple_set;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_subsampled;
-  pcl::PointCloud<pcl::PointNormal>::Ptr model_subsampled;
   float step;
   float AngleThreshold;
   float distanceThreshold;

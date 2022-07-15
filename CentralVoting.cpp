@@ -98,18 +98,31 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   return sample_filter.compute();
 }
 
-void CentralVoting::EstablishPPF(
-    pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
-  DownSample(input_cloud);
+void CentralVoting::Solve() {
+  std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
+  for (auto i = 0;i<this->model_set.size();i++){
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(model_set[i]);
+    cloud_models_with_normal.push_back(model_with_normal);
+    PCL_INFO("begin to establish ppf");
+    pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(new pcl::PointCloud<pcl::PPFSignature>());
+    pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>ppf_estimator;
+    ppf_estimator.setInputCloud(model_with_normal);
+    ppf_estimator.setInputNormals(model_with_normal);
+    ppf_estimator.compute(*cloud_model_ppf);
+
+  }
+
 }
+
+
 void CentralVoting::test() {
-  this->model_subsampled = DownSample(this->model_set[0]);
+  pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(this->model_set[0]);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
-      this->model_subsampled, 255, 0, 0);
-  view.addPointCloud(this->model_subsampled, red, "cloud");
-  view.addPointCloudNormals<pcl::PointNormal>(this->model_subsampled, 10, 0.5,
+      model_with_normal, 255, 0, 0);
+  view.addPointCloud(model_with_normal, red, "cloud");
+  view.addPointCloudNormals<pcl::PointNormal>(model_with_normal, 10, 0.5,
                                               "cloud with normal");
   while (!view.wasStopped()) {
     view.spinOnce(100);
