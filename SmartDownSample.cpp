@@ -5,7 +5,7 @@
 #include "SmartDownSample.h"
 #include <omp.h>
 pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
-  std::cout<<"before down sample"<<this->input_cloud->points.size();
+  std::cout << "before down sample" << this->input_cloud->points.size();
   PCL_INFO("\nstart to compute\n");
   PCL_INFO("\nstart to calculate normal\n");
   pcl::PointCloud<pcl::Normal>::Ptr normal(new pcl::PointCloud<pcl::Normal>());
@@ -56,8 +56,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
 #pragma omp barrier
   PCL_INFO("\nfinish map init\n");
 
-#pragma omp parallel for shared( \
-    map, x_num, y_num, cloud_with_normals,cout) default(none) num_threads(15)
+#pragma omp parallel for shared(map, x_num, y_num, cloud_with_normals, \
+                                cout) default(none) num_threads(15)
   for (int i = 0; i < this->input_cloud->points.size(); i++) {
     const int xCell =
         static_cast<int>(std::ceil(
@@ -86,7 +86,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
 #pragma omp critical
     map[index]->points.push_back(cloud_with_normals->points[i]);
 
-    //std::cout<<cloud_with_normals->points[i].normal_x<<std::endl;
+    // std::cout<<cloud_with_normals->points[i].normal_x<<std::endl;
   }
 
 #pragma omp barrier
@@ -156,7 +156,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
     }
   }
   PCL_INFO("\ndown sample finish\n");
-  std::cout <<"after down sample"<< output_cloud->points.size() << std::endl;
+  std::cout << "after down sample" << output_cloud->points.size() << std::endl;
   return output_cloud;
 }
 

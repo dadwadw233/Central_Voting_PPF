@@ -65,8 +65,9 @@ class CentralVoting {
 
   void InitTripleSet();
 
-  static void GenerateBound(const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
-                     pcl::PointXYZ &max_point, pcl::PointXYZ &min_point);
+  static void GenerateBound(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
+      pcl::PointXYZ &max_point, pcl::PointXYZ &min_point);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
@@ -81,6 +82,11 @@ class CentralVoting {
 
   void test();  //测试入口函数
 
+  void setNormalEstimationRadius(const float &radius);
+
+  void setAngleThreshold(const float &angle);
+
+  void setDownSampleStep(const float &step);
   CentralVoting &operator=(const CentralVoting &) = delete;
   CentralVoting(const CentralVoting &) = delete;
 
@@ -92,5 +98,9 @@ class CentralVoting {
   std::vector<std::vector<pcl::PointXYZ>> triple_set;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_subsampled;
   pcl::PointCloud<pcl::PointNormal>::Ptr model_subsampled;
+  float step;
+  float AngleThreshold;
+  float distanceThreshold;
+  float normalEstimationRadius;
 };
 #endif  // CENTRAL_VOTING_CENTRALVOTING_H

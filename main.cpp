@@ -1,14 +1,15 @@
+#include <pcl/console/parse.h>
 #include "CentralVoting.h"
 #include "pcl/io/pcd_io.h"
-#include <pcl/console/parse.h>
 
 int main(int argc, char** argv) {
-  if(argc<=1){
+  if (argc <= 1) {
     PCL_ERROR("Syntax: ./central_voting pcd_model_list pcd_scene(optional)\n");
     return -1;
   }
-  std::vector<int> pcd_file_indices = pcl::console::parse_file_extension_argument (argc, argv, ".pcd");
-  if(pcd_file_indices.size()<1){
+  std::vector<int> pcd_file_indices =
+      pcl::console::parse_file_extension_argument(argc, argv, ".pcd");
+  if (pcd_file_indices.size() < 1) {
     PCL_ERROR("need pcd file as input\n");
     return -1;
   }
@@ -19,7 +20,10 @@ int main(int argc, char** argv) {
   reader.read(argv[1], *model);
 
   CentralVoting handle(model);
-  //handle.CenterExtractorAll();
+  // handle.CenterExtractorAll();
+  handle.setNormalEstimationRadius(5.0f);
+  handle.setDownSampleStep(5.0f);
+  handle.setAngleThreshold(55);
   handle.test();
   return 0;
 }
