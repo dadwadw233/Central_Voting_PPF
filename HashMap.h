@@ -64,6 +64,7 @@ class HashMap {
 
   bool empty();
 
+  HashMap(){}
  private:
 
 

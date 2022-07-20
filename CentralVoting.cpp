@@ -114,13 +114,14 @@ void CentralVoting::Solve() {
     ppf_estimator.setInputNormals(model_with_normal);
     ppf_estimator.compute(*cloud_model_ppf);
      */
-    Hash::Ptr hash_map;
+    Hash::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
     ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
 
 
   }
+  PCL_INFO("finish ppf establish");
 }
 
 void CentralVoting::test() {
