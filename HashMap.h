@@ -56,6 +56,13 @@ struct HashKey {
 
 class HashMap {
  public:
+  bool addInfo(Hash::HashKey &key, Hash::HashData &data);
+
+  decltype(auto) find(Hash::HashKey &key);
+
+  decltype(auto) begin();
+
+  bool empty();
 
  private:
 
