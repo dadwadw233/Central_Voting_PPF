@@ -39,29 +39,36 @@
 #include "pcl/point_representation.h"
 #include "pcl/registration/registration.h"
 #include "pcl/visualization/cloud_viewer.h"
+namespace Hash{
+struct HashData {
+  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>>Or;
+  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>>Ot;
+};
+struct HashKey {
+  int k1;
+  int k2;
+  int k3;
+  int k4;
+  bool operator==(const HashKey &k) const {
+    return k1 == k.k1 && k2 == k.k2 && k3 == k.k3 && k4 == k.k4;
+  }
+};
+
 class HashMap {
  public:
 
  private:
-  struct HashKey{
-    int k1;
-    int k2;
-    int k3;
-    int k4;
-    bool operator==(const HashKey &k)const{
-      return k1 == k.k1 && k2 == k.k2 && k3 == k.k3 && k4 == k.k4;
-    }
-  };
 
-  struct hash_cal{
-    size_t operator()(const HashKey &k)const{
-      return std::hash<int>()(k.k1)^std::hash<int>()(k.k2)^std::hash<int>()(k.k3)^std::hash<int>()(k.k4);
+
+  struct hash_cal {
+    size_t operator()(const HashKey &k) const {
+      return std::hash<int>()(k.k1) ^ std::hash<int>()(k.k2) ^
+             std::hash<int>()(k.k3) ^ std::hash<int>()(k.k4);
     }
   };
-  struct HashData{
-    Eigen::Vector3f Or;
-    Eigen::Vector3f Ot;
-  };
-  std::unordered_multimap<HashKey,HashData,hash_cal>map;
+  std::unordered_multimap<HashKey, HashData, hash_cal> map;
 };
 #endif  // CENTRAL_VOTING_HASHMAP_H
+typedef boost::shared_ptr<Hash::HashMap> Ptr;
+
+}

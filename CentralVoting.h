@@ -69,7 +69,7 @@ class CentralVoting {
       pcl::PointXYZ &max_point, pcl::PointXYZ &min_point);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
-      const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) const;
 
   void SimpleDownSample(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 

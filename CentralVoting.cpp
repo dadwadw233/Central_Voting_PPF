@@ -3,6 +3,7 @@
 //
 #include "CentralVoting.h"
 #include "SmartDownSample.h"
+#include "PPFEstimation.h"
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -86,7 +87,7 @@ void CentralVoting::CenterExtractor(int index) {
 }
 
 pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) const {
   pcl::PointXYZ max_point, min_point;
   GenerateBound(input_cloud, max_point, min_point);
   SmartDownSample sample_filter(input_cloud,
