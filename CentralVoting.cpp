@@ -2,8 +2,8 @@
 // Created by yyh on 22-7-11.
 //
 #include "CentralVoting.h"
-#include "SmartDownSample.h"
 #include "PPFEstimation.h"
+#include "SmartDownSample.h"
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -101,23 +101,24 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 
 void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
-  for (auto i = 0;i<this->model_set.size();i++){
-    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(model_set[i]);
+  for (auto i = 0; i < this->model_set.size(); i++) {
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+        DownSample(model_set[i]);
     cloud_models_with_normal.push_back(model_with_normal);
     PCL_INFO("begin to establish ppf");
-    pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(new pcl::PointCloud<pcl::PPFSignature>());
-    pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>ppf_estimator;
+    pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
+        new pcl::PointCloud<pcl::PPFSignature>());
+    pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>
+        ppf_estimator;
     ppf_estimator.setInputCloud(model_with_normal);
     ppf_estimator.setInputNormals(model_with_normal);
     ppf_estimator.compute(*cloud_model_ppf);
-
   }
-
 }
 
-
 void CentralVoting::test() {
-  pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(this->model_set[0]);
+  pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+      DownSample(this->model_set[0]);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
