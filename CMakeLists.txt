@@ -23,10 +23,14 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable(central_voting
         main.cpp
+        PPFEstimation.cpp
+        PPFEstimation.h
         CentralVoting.h
         CentralVoting.cpp
         SmartDownSample.cpp
         SmartDownSample.h
+        HashMap.cpp
+        HashMap.h
         )
 
 target_link_libraries(central_voting ${PCL_LIBRARIES} tbb)

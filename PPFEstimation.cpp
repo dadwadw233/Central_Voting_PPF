@@ -28,7 +28,7 @@ void PPFEstimation::compute(
 
         float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
 
-        pcl::PPFSignature feature;
+        pcl::PPFSignature feature{};
 
         feature.f1 = f1;
         feature.f2 = f2;
@@ -40,17 +40,19 @@ void PPFEstimation::compute(
             n1.cross3(delta), std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
         data.Ot = (std::make_pair(
             n2.cross3(delta), std::make_pair(n2.cross3(n2.cross3(delta)), n2)));
-        Hash::HashKey key;
-        key.k1 = f1;
-        key.k2 = f2;
-        key.k3 = f3;
-        key.k4 = f4;
-
-
+        Hash::HashKey key{};
+        key.k1 = static_cast<int>(std::floor(f1/angle_discretization_step));
+        key.k2 = static_cast<int>(std::floor(f2/angle_discretization_step));
+        key.k3 = static_cast<int>(std::floor(f3/angle_discretization_step));
+        key.k4 = static_cast<int>(std::floor(f4/distance_discretization_step));
+        hash_map->addInfo(key,data);
         output_cloud->push_back(feature);
       }
     }
   }
 }
-
-
+void PPFEstimation::setDiscretizationSteps(const float &angle_discretization_step, const float &distance_discretization_step) {
+  this->angle_discretization_step = angle_discretization_step;
+  this->distance_discretization_step = distance_discretization_step;
+}
+PPFEstimation::PPFEstimation() {}

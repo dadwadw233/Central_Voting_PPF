@@ -108,11 +108,18 @@ void CentralVoting::Solve() {
     PCL_INFO("begin to establish ppf");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
         new pcl::PointCloud<pcl::PPFSignature>());
-    pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>
+    /*pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>
         ppf_estimator;
     ppf_estimator.setInputCloud(model_with_normal);
     ppf_estimator.setInputNormals(model_with_normal);
     ppf_estimator.compute(*cloud_model_ppf);
+     */
+    Hash::Ptr hash_map;
+    PPFEstimation ppf_estimator;
+    ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
+    ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
+
+
   }
 }
 

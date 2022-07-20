@@ -24,6 +24,6 @@ int main(int argc, char** argv) {
   handle.setNormalEstimationRadius(10.0f);
   handle.setDownSampleStep(10.0f);
   handle.setAngleThreshold(30);
-  handle.test();
+  handle.Solve();
   return 0;
 }

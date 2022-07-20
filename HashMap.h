@@ -75,7 +75,7 @@ class HashMap {
   };
   std::unordered_multimap<HashKey, HashData, hash_cal> map;
 };
-#endif  // CENTRAL_VOTING_HASHMAP_H
 typedef boost::shared_ptr<Hash::HashMap> Ptr;
 
 }
+#endif  // CENTRAL_VOTING_HASHMAP_H
