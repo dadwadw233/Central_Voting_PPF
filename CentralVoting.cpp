@@ -4,6 +4,7 @@
 #include "CentralVoting.h"
 #include "PPFEstimation.h"
 #include "SmartDownSample.h"
+#include "time.h"
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -101,12 +102,14 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 
 void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
+  clock_t start,end;
   for (auto i = 0; i < this->model_set.size(); i++) {
     auto model_cloud = SimpleDownSample(model_set[i]);
         pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
         DownSample(model_cloud);
     cloud_models_with_normal.push_back(model_with_normal);
-    PCL_INFO("begin to establish ppf");
+
+    PCL_INFO("begin to establish ppf\n");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
         new pcl::PointCloud<pcl::PPFSignature>());
     /*pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>
@@ -115,14 +118,17 @@ void CentralVoting::Solve() {
     ppf_estimator.setInputNormals(model_with_normal);
     ppf_estimator.compute(*cloud_model_ppf);
      */
+
     Hash::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
     ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
+    start = clock();
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
-
+    end = clock();
 
   }
-  PCL_INFO("finish ppf establish");
+  std::cout<<"time:"<<end-start<<std::endl;
+  PCL_INFO("finish ppf establish\n");
 }
 
 void CentralVoting::test() {
