@@ -102,8 +102,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   for (auto i = 0; i < this->model_set.size(); i++) {
-    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-        DownSample(model_set[i]);
+    auto model_cloud = SimpleDownSample(model_set[i]);
+        pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+        DownSample(model_cloud);
     cloud_models_with_normal.push_back(model_with_normal);
     PCL_INFO("begin to establish ppf");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
@@ -125,8 +126,9 @@ void CentralVoting::Solve() {
 }
 
 void CentralVoting::test() {
+  auto model_cloud = SimpleDownSample(model_set[0]);
   pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-      DownSample(this->model_set[0]);
+      DownSample(model_cloud);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
@@ -181,4 +183,18 @@ bool CentralVoting::AddModel(pcl::PointCloud<pcl::PointXYZ>::Ptr input_model) {
     this->model_set.push_back(std::move(input_model));
     return true;
   }
+}
+void CentralVoting::setSimpleDownSampleLeaf(const Eigen::Vector4f &subsampling_leaf_size) {
+  this->subsampling_leaf_size = subsampling_leaf_size;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::SimpleDownSample( pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
+  std::cout<<"input_cloud_size:"<<input_cloud->points.size()<<std::endl;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::VoxelGrid<pcl::PointXYZ>subsampling_filter;
+  subsampling_filter.setInputCloud(input_cloud);
+  subsampling_filter.setLeafSize(this->subsampling_leaf_size);
+  subsampling_filter.filter(*cloud_subsampled);
+  std::cout<<"output_cloud_size:"<<cloud_subsampled->points.size()<<std::endl;
+  return cloud_subsampled;
 }

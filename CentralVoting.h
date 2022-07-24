@@ -71,7 +71,7 @@ class CentralVoting {
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) const;
 
-  void SimpleDownSample(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr SimpleDownSample(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
   void Solve();
 
@@ -86,6 +86,9 @@ class CentralVoting {
   void setAngleThreshold(const float &angle);
 
   void setDownSampleStep(const float &step);
+
+  void setSimpleDownSampleLeaf(const Eigen::Vector4f &subsampling_leaf_size);
+
   CentralVoting &operator=(const CentralVoting &) = delete;
   CentralVoting(const CentralVoting &) = delete;
 
@@ -97,6 +100,7 @@ class CentralVoting {
   std::vector<std::vector<pcl::PointXYZ>> triple_set;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_subsampled;
   float step;
+  Eigen::Vector4f subsampling_leaf_size;
   float AngleThreshold;
   float distanceThreshold;
   float normalEstimationRadius;
