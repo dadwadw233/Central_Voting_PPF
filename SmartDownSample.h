@@ -90,6 +90,7 @@ class SmartDownSample {
   float step;
   float angleThreshold, distanceThreshold;
   float normal_estimation_search_radius;
+  bool isdense = false;
 };
 
 #endif  // CENTRAL_VOTING_SMARTDOWNSAMPLE_H

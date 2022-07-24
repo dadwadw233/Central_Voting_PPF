@@ -108,7 +108,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
     int cnt = 0;
     if (map[i]->points.empty()) {
       continue;
-    } else if (map[i]->points.size() == 1) {
+    } else if (map[i]->points.size() == 1&&isdense) {
 #pragma omp critical
       output_cloud->points.push_back(map[i]->points[0]);
       continue;
@@ -118,7 +118,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
         flag[p] = false;
       }
       for (int j = 0; j < map[i]->points.size(); j++) {
-        if (cnt == map[i]->points.size()) {
+        if (cnt == map[i]->points.size()||(cnt>=map[i]->points.size()/3&&!isdense)) {
           break;
         }
 
@@ -150,7 +150,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
         }
       }
     }
-    if (cnt == 0) {
+    if (cnt == 0&&isdense) {
       Eigen::Vector4f center;
       pcl::compute3DCentroid(*map[i],center);
       pcl::PointNormal p;
