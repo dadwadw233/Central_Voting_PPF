@@ -102,7 +102,6 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 
 void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
-  clock_t start, end;
   for (auto i = 0; i < this->model_set.size(); i++) {
     auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
@@ -125,9 +124,14 @@ void CentralVoting::Solve() {
     // start = clock();
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
     // end = clock();
+    for(auto i:*cloud_model_ppf){
+      std::cout<<i<<std::endl;
+    }
   }
   // std::cout<<"time:"<<end-start<<std::endl;
   PCL_INFO("finish ppf establish\n");
+
+
 }
 
 void CentralVoting::test() {

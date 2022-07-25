@@ -12,15 +12,15 @@ void PPFEstimation::compute(
   std::make_shared<pcl::PPFSignature>(); std::shared_ptr<Hash::HashData>data =
   std::make_shared<Hash::HashData>(); std::shared_ptr<Hash::HashKey>key =
   std::make_shared<Hash::HashKey>();*/
-  pcl::PPFSignature feature;
-  std::pair<Hash::HashKey, Hash::HashData> data;
+  pcl::PPFSignature feature{};
+  std::pair<Hash::HashKey, Hash::HashData> data{};
   // Hash::HashData data;
   // Hash::HashKey key;
-  Eigen::Vector4f p1;
-  Eigen::Vector4f p2;
-  Eigen::Vector4f n1;
-  Eigen::Vector4f n2;
-  Eigen::Vector4f delta;
+  Eigen::Vector4f p1{};
+  Eigen::Vector4f p2{};
+  Eigen::Vector4f n1{};
+  Eigen::Vector4f n2{};
+  Eigen::Vector4f delta{};
 
   auto tp1 = std::chrono::steady_clock::now();
 
@@ -63,17 +63,24 @@ void PPFEstimation::compute(
           // normalize
           delta /= f4;
 
+
           float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
 
           float f2 = n1[0] * delta[0] + n2[1] * delta[1] + n2[2] * delta[2];
 
           float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
 
+           /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  * delta.z();
+
+           float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  * delta.z();
+
+           float f3 = n1.x() * n2.x() + n1.y()  * n2.y()  + n1.z()  * n2.z() ;
+            */
           feature.f1 = f1;
           feature.f2 = f2;
           feature.f3 = f3;
           feature.f4 = f4;
-
+          feature.alpha_m = 0.0f;
           data.second.Or =
               (std::make_pair(n1.cross3(delta),
                               std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
@@ -96,9 +103,6 @@ void PPFEstimation::compute(
 #pragma omp critical
           output_cloud->points.push_back(feature);
 
-          // key.reset();
-          // data.reset();
-          // feature.reset();
         }
       }
     }
