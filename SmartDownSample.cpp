@@ -108,7 +108,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
     int cnt = 0;
     if (map[i]->points.empty()) {
       continue;
-    } else if (map[i]->points.size() == 1&&isdense) {
+    } else if (map[i]->points.size() == 1 && isdense) {
 #pragma omp critical
       output_cloud->points.push_back(map[i]->points[0]);
       continue;
@@ -118,7 +118,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
         flag[p] = false;
       }
       for (int j = 0; j < map[i]->points.size(); j++) {
-        if (cnt == map[i]->points.size()||(cnt>=map[i]->points.size()/3&&!isdense)) {
+        if (cnt == map[i]->points.size() ||
+            (cnt >= map[i]->points.size() / 3 && !isdense)) {
           break;
         }
 
@@ -150,22 +151,24 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
         }
       }
     }
-    if (cnt == 0&&isdense) {
+    if (cnt == 0 && isdense) {
       Eigen::Vector4f center;
-      pcl::compute3DCentroid(*map[i],center);
+      pcl::compute3DCentroid(*map[i], center);
       pcl::PointNormal p;
       p.x = center(0);
       p.y = center(1);
       p.z = center(2);
       map[i]->points.push_back(p);
       //法向量求解器
-      pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal> pointNormalEstimation;
+      pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal>
+          pointNormalEstimation;
       //法向量
       pcl::PointNormal pointNormal;
       //我们要求解的点,这个点的index你可以自己设置
-      pcl::PointNormal searchPoint = map[i]->points[map[i]->points.size()-1];
-      //KNN
-      pcl::search::KdTree<pcl::PointNormal>::Ptr tree(new pcl::search::KdTree<pcl::PointNormal>());
+      pcl::PointNormal searchPoint = map[i]->points[map[i]->points.size() - 1];
+      // KNN
+      pcl::search::KdTree<pcl::PointNormal>::Ptr tree(
+          new pcl::search::KdTree<pcl::PointNormal>());
       //设置KdTree要求解的点云参数
       tree->setInputCloud(map[i]);
       //这是K近邻的半径
@@ -182,8 +185,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
       float curvature;
       //进行单个点的法向量求解
       pcl::PointCloud<pcl::PointXYZ> cloud;
-      pcl::copyPointCloud(*map[i],cloud);
-      pointNormalEstimation.computePointNormal(cloud, indices, planeParams, curvature);
+      pcl::copyPointCloud(*map[i], cloud);
+      pointNormalEstimation.computePointNormal(cloud, indices, planeParams,
+                                               curvature);
       pointNormal.x = searchPoint.x;
       pointNormal.y = searchPoint.y;
       pointNormal.z = searchPoint.z;

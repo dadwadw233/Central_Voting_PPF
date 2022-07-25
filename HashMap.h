@@ -39,10 +39,10 @@
 #include "pcl/point_representation.h"
 #include "pcl/registration/registration.h"
 #include "pcl/visualization/cloud_viewer.h"
-namespace Hash{
+namespace Hash {
 struct HashData {
-  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>>Or;
-  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>>Ot;
+  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>> Or;
+  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>> Ot;
 };
 struct HashKey {
   int k1;
@@ -60,27 +60,27 @@ class HashMap {
 
   bool addInfo(std::pair<Hash::HashKey, Hash::HashData> &data);
 
-
   decltype(auto) find(Hash::HashKey &key);
 
   decltype(auto) begin();
 
   bool empty();
 
-  HashMap(){}
+  HashMap() {}
+
  private:
-
-
   struct hash_cal {
     size_t operator()(const HashKey &k) const {
-      return std::hash<int>()(k.k1) ^ (std::hash<int>()(k.k2)<<1) ^
-             (std::hash<int>()(k.k3)<<2) ^ (std::hash<int>()(k.k4)<<3);
-      //return std::hash<int>()(k.k1);
+      return std::hash<int>()(k.k1) ^ (std::hash<int>()(k.k2) << 1) ^
+             (std::hash<int>()(k.k3) << 2) ^ (std::hash<int>()(k.k4) << 3) ^
+             (std::hash<int>()(k.k1) << 4) ^ (std::hash<int>()(k.k2) << 5) ^
+             (std::hash<int>()(k.k3) << 5) ^ (std::hash<int>()(k.k4) << 6);
+      // return std::hash<int>()(k.k1);
     }
   };
   std::unordered_multimap<HashKey, HashData, hash_cal> map;
 };
 typedef boost::shared_ptr<Hash::HashMap> Ptr;
 
-}
+}  // namespace Hash
 #endif  // CENTRAL_VOTING_HASHMAP_H

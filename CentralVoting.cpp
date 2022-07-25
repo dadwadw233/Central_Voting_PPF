@@ -102,10 +102,10 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 
 void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
-  clock_t start,end;
+  clock_t start, end;
   for (auto i = 0; i < this->model_set.size(); i++) {
     auto model_cloud = SimpleDownSample(model_set[i]);
-        pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
         DownSample(model_cloud);
     cloud_models_with_normal.push_back(model_with_normal);
 
@@ -122,12 +122,11 @@ void CentralVoting::Solve() {
     Hash::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
     ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
-    //start = clock();
+    // start = clock();
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
-    //end = clock();
-
+    // end = clock();
   }
-  //std::cout<<"time:"<<end-start<<std::endl;
+  // std::cout<<"time:"<<end-start<<std::endl;
   PCL_INFO("finish ppf establish\n");
 }
 
@@ -190,17 +189,21 @@ bool CentralVoting::AddModel(pcl::PointCloud<pcl::PointXYZ>::Ptr input_model) {
     return true;
   }
 }
-void CentralVoting::setSimpleDownSampleLeaf(const Eigen::Vector4f &subsampling_leaf_size) {
+void CentralVoting::setSimpleDownSampleLeaf(
+    const Eigen::Vector4f &subsampling_leaf_size) {
   this->subsampling_leaf_size = subsampling_leaf_size;
 }
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::SimpleDownSample( pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
-  std::cout<<"input_cloud_size:"<<input_cloud->points.size()<<std::endl;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::VoxelGrid<pcl::PointXYZ>subsampling_filter;
+pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::SimpleDownSample(
+    pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) {
+  std::cout << "input_cloud_size:" << input_cloud->points.size() << std::endl;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
+      new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;
   subsampling_filter.setInputCloud(input_cloud);
   subsampling_filter.setLeafSize(this->subsampling_leaf_size);
   subsampling_filter.filter(*cloud_subsampled);
-  std::cout<<"output_cloud_size:"<<cloud_subsampled->points.size()<<std::endl;
+  std::cout << "output_cloud_size:" << cloud_subsampled->points.size()
+            << std::endl;
   return cloud_subsampled;
 }

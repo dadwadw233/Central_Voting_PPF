@@ -17,7 +17,7 @@ class PPFEstimation {
                Hash::Ptr &hash_map);
 
   void setDiscretizationSteps(const float &angle_discretization_step,
-                               const float &distance_discretization_step);
+                              const float &distance_discretization_step);
 
   PPFEstimation &operator=(const PPFEstimation &) = delete;
   PPFEstimation(const PPFEstimation &) = delete;
