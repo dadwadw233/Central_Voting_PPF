@@ -3,6 +3,7 @@
 //
 #include "PPFEstimation.h"
 #include "omp.h"
+#include "chrono"
 void PPFEstimation::compute(
     const pcl::PointCloud<pcl::PointNormal>::Ptr &input_point_normal,
     pcl::PointCloud<pcl::PPFSignature>::Ptr &output_cloud, Hash::Ptr &hash_map) {
@@ -13,6 +14,7 @@ void PPFEstimation::compute(
   pcl::PPFSignature feature;
   Hash::HashData data;
   Hash::HashKey key;
+  auto tp1 = std::chrono::steady_clock::now();
 
   for (auto i = 0;i<input_point_normal->size();i++) {
 #pragma omp parallel shared(input_point_normal, output_cloud, hash_map,cout,i) private(feature, data, key) default(none)
@@ -76,7 +78,9 @@ void PPFEstimation::compute(
     }
   }
 }
-
+#pragma omp barrier
+         auto tp2 = std::chrono::steady_clock::now();
+         std::cout <<"need "<< std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1).count() << "ms to process PPF" << std::endl;
 }
 
 

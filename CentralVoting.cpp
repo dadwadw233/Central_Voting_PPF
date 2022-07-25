@@ -122,12 +122,12 @@ void CentralVoting::Solve() {
     Hash::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
     ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
-    start = clock();
+    //start = clock();
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
-    end = clock();
+    //end = clock();
 
   }
-  std::cout<<"time:"<<end-start<<std::endl;
+  //std::cout<<"time:"<<end-start<<std::endl;
   PCL_INFO("finish ppf establish\n");
 }
 

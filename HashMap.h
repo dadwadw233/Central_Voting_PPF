@@ -70,8 +70,9 @@ class HashMap {
 
   struct hash_cal {
     size_t operator()(const HashKey &k) const {
-      return std::hash<int>()(k.k1) ^ std::hash<int>()(k.k2) ^
-             std::hash<int>()(k.k3) ^ std::hash<int>()(k.k4);
+      return std::hash<int>()(k.k1) ^ (std::hash<int>()(k.k2)<<1) ^
+             (std::hash<int>()(k.k3)<<2) ^ (std::hash<int>()(k.k4)<<3);
+      //return std::hash<int>()(k.k1);
     }
   };
   std::unordered_multimap<HashKey, HashData, hash_cal> map;
