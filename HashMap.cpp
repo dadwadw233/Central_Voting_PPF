@@ -14,6 +14,15 @@ bool HashMap::addInfo(Hash::HashKey &key, Hash::HashData &data) {
     return false ;
   }
 }
+bool HashMap::addInfo(std::pair<Hash::HashKey, Hash::HashData> &data) {
+  try{
+    this->map.insert(data);
+    return true;
+  }catch(std::bad_alloc){
+    PCL_INFO("bad alloc !! ");
+    return false ;
+  }
+}
 
 decltype(auto) HashMap::find(Hash::HashKey &key) {
   return this->map.find(key);
