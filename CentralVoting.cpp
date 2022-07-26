@@ -4,7 +4,7 @@
 #include "CentralVoting.h"
 #include "PPFEstimation.h"
 #include "SmartDownSample.h"
-#include "time.h"
+
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -50,7 +50,7 @@ void CentralVoting::CenterExtractor(int index) {
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
-  this->InitTripleSet();
+
   this->triple_set[index].push_back(center_);
   this->triple_set[index].push_back(p_faux);
   this->triple_set[index].push_back(p_saux);
@@ -102,6 +102,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 
 void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
+  std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
     auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
@@ -123,15 +124,17 @@ void CentralVoting::Solve() {
     ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
     // start = clock();
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
-    // end = clock();
-    for(auto i:*cloud_model_ppf){
-      std::cout<<i<<std::endl;
-    }
+
+    hashmap_search_vector.push_back(hash_map);
   }
   // std::cout<<"time:"<<end-start<<std::endl;
   PCL_INFO("finish ppf establish\n");
 
+  PCL_INFO("Registering models to scene ...\n");
 
+  for(std::size_t model_i = 0; model_i < model_set.size(); ++model_i){
+
+  }
 }
 
 void CentralVoting::test() {
@@ -164,6 +167,7 @@ bool CentralVoting::CenterExtractorAll() {
     PCL_ERROR("there is no model point cloud in the model set\n");
     return false;
   } else {
+    this->InitTripleSet();
     for (auto i = 0; i < this->model_set.size(); i++) {
       CenterExtractor(i);
     }
