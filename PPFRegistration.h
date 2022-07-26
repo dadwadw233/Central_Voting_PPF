@@ -10,12 +10,14 @@
 
 class PPFRegistration{
  public:
+  PPFRegistration();
+
   void compute();
 
   decltype(auto) getFinalTransformation();
 
   template <class T>
-  void aligen(typename pcl::PointCloud<T>::Ptr &output);
+  typename pcl::PointCloud<T>::Ptr aligen(const typename pcl::PointCloud<T>::Ptr &input);
 
   void setSceneReferencePointSamplingRate(const float &scene_reference_point_sampling_rate);
 
@@ -23,16 +25,21 @@ class PPFRegistration{
 
   void setRotationClusteringThreshold(const float &clustering_rotation_diff_threshold);
 
-  void setSearchMap(const Hash::Ptr searchMap);
+  void setSearchMap(const Hash::Ptr &searchMap);
 
   void setInputSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 
   void setInputTarget(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 
+
+
+  PPFRegistration &operator=(const PPFRegistration &) = delete;
+  PPFRegistration(const PPFRegistration &) = delete;
+
  private:
-  float scene_reference_point_sampling_rate;
-  float clustering_position_diff_threshold;
-  float clustering_rotation_diff_threshold;
+  float scene_reference_point_sampling_rate{};
+  float clustering_position_diff_threshold{};
+  float clustering_rotation_diff_threshold{};
   pcl::PointCloud<pcl::PointNormal>::Ptr model_cloud_with_normal;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Matrix4f finalTransformation;
