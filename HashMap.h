@@ -60,7 +60,9 @@ class HashMap {
 
   bool addInfo(std::pair<Hash::HashKey, Hash::HashData> &data);
 
-  decltype(auto) find(Hash::HashKey &key);
+  HashData getData(Hash::HashKey &key);
+
+  bool find(Hash::HashKey &key);
 
   decltype(auto) begin();
 

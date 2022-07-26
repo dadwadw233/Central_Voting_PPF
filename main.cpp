@@ -15,17 +15,20 @@ int main(int argc, char** argv) {
   }
   pcl::PointCloud<pcl::PointXYZ>::Ptr model(
       new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::PointCloud<pcl::PointXYZ>::Ptr scene(
+      new pcl::PointCloud<pcl::PointXYZ>());
   pcl::PCDReader reader;
 
   reader.read(argv[1], *model);
-
-  CentralVoting handle(model);
-  // handle.CenterExtractorAll();
+  reader.read(argv[2], *scene);
+  std::cout<<argv[1]<<" "<<argv[2]<<std::endl;
+  CentralVoting handle(scene,model);
+   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(10.0f);
   handle.setDownSampleStep(10.0f);
   handle.setAngleThreshold(30);
   handle.setSimpleDownSampleLeaf(Eigen::Vector4f(2.0f, 2.0f, 2.0f, 0.0f));
    //handle.test();
-  //handle.Solve();
+  handle.Solve();
   return 0;
 }

@@ -24,13 +24,13 @@ void PPFEstimation::compute(
 
   auto tp1 = std::chrono::steady_clock::now();
 
-  for (auto i = 0; i < input_point_normal->size(); i++) {
+  for (auto i = 0; i < input_point_normal->size(); ++i) {
 #pragma omp parallel shared(input_point_normal, output_cloud, hash_map, cout, \
                             i) private(feature, data, p1, p2, n1, n2,         \
                                        delta) default(none)
     {
 #pragma omp for
-      for (auto j = 0; j < input_point_normal->size(); j++) {
+      for (auto j = 0; j < input_point_normal->size(); ++j) {
         if (i == j) {
           continue;
         } else {

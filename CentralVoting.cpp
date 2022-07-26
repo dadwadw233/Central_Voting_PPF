@@ -4,7 +4,7 @@
 #include "CentralVoting.h"
 #include "PPFEstimation.h"
 #include "SmartDownSample.h"
-
+#include "PPFRegistration.h"
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -54,7 +54,7 @@ void CentralVoting::CenterExtractor(int index) {
   this->triple_set[index].push_back(center_);
   this->triple_set[index].push_back(p_faux);
   this->triple_set[index].push_back(p_saux);
-
+/*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_cloud(
       new pcl::PointCloud<pcl::PointXYZ>());
   triple_cloud->points.push_back(center_);
@@ -84,7 +84,7 @@ void CentralVoting::CenterExtractor(int index) {
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-  }
+  }*/
 }
 
 pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
@@ -101,6 +101,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 }
 
 void CentralVoting::Solve() {
+  auto scene_cloud = SimpleDownSample(scene);
+  this->scene_subsampled  = DownSample(scene_cloud);
+
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
@@ -133,7 +136,16 @@ void CentralVoting::Solve() {
   PCL_INFO("Registering models to scene ...\n");
 
   for(std::size_t model_i = 0; model_i < model_set.size(); ++model_i){
-
+    PPFRegistration ppf_registration{};
+    ppf_registration.setSceneReferencePointSamplingRate(10);
+    ppf_registration.setPositionClusteringThreshold(0.2f);
+    ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
+                                                    float(M_PI));
+    ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
+    ppf_registration.setInputSource(cloud_models_with_normal[model_i]);
+    ppf_registration.setInputTarget(this->scene_subsampled);
+    ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
+    ppf_registration.compute();
   }
 }
 

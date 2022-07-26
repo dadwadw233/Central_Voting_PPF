@@ -24,7 +24,17 @@ bool HashMap::addInfo(std::pair<Hash::HashKey, Hash::HashData> &data) {
   }
 }
 
-decltype(auto) HashMap::find(Hash::HashKey &key) { return this->map.find(key); }
+HashData HashMap::getData(Hash::HashKey &key) {
+  return (*this->map.find(key)).second;
+}
+
+bool HashMap::find(Hash::HashKey &key) {
+  if(map.find(key)!=map.end()){
+    return true;
+  }else{
+    return false;
+  }
+}
 
 bool HashMap::empty() { return this->map.empty(); }
 

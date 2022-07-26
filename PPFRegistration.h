@@ -31,8 +31,10 @@ class PPFRegistration{
 
   void setInputTarget(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 
+  void setDiscretizationSteps(const float &angle_discretization_step,
+                              const float &distance_discretization_step);
 
-
+  void setModelTripleSet(const std::vector<pcl::PointXYZ>&triple_set);
   PPFRegistration &operator=(const PPFRegistration &) = delete;
   PPFRegistration(const PPFRegistration &) = delete;
 
@@ -44,6 +46,9 @@ class PPFRegistration{
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Matrix4f finalTransformation;
   Hash::Ptr searchMap;
+  std::vector<pcl::PointXYZ>triple_set;
+  float angle_discretization_step;
+  float distance_discretization_step;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H
