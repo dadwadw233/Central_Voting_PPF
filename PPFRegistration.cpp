@@ -5,26 +5,32 @@
 #include "PPFRegistration.h"
 
 PPFRegistration::PPFRegistration() {
-  model_cloud_with_normal.reset( new pcl::PointCloud<pcl::PointNormal>());
+  model_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
   scene_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
   searchMap.reset(new Hash::HashMap());
 }
-void PPFRegistration::setSceneReferencePointSamplingRate(const float &scene_reference_point_sampling_rate) {
-  this->scene_reference_point_sampling_rate = scene_reference_point_sampling_rate;
+void PPFRegistration::setSceneReferencePointSamplingRate(
+    const float &scene_reference_point_sampling_rate) {
+  this->scene_reference_point_sampling_rate =
+      scene_reference_point_sampling_rate;
 }
 
-void PPFRegistration::setPositionClusteringThreshold(const float &clustering_position_diff_threshold) {
+void PPFRegistration::setPositionClusteringThreshold(
+    const float &clustering_position_diff_threshold) {
   this->clustering_position_diff_threshold = clustering_position_diff_threshold;
 }
 
-void PPFRegistration::setRotationClusteringThreshold(const float &clustering_rotation_diff_threshold) {
+void PPFRegistration::setRotationClusteringThreshold(
+    const float &clustering_rotation_diff_threshold) {
   this->clustering_rotation_diff_threshold = clustering_rotation_diff_threshold;
 }
-void PPFRegistration::setInputTarget(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
-  this->model_cloud_with_normal = cloud;
-}
-void PPFRegistration::setInputSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
+void PPFRegistration::setInputTarget(
+    const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
   this->scene_cloud_with_normal = cloud;
+}
+void PPFRegistration::setInputSource(
+    const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
+  this->model_cloud_with_normal = cloud;
 }
 void PPFRegistration::setSearchMap(const Hash::Ptr &searchMap) {
   this->searchMap = searchMap;
@@ -39,20 +45,26 @@ void PPFRegistration::setDiscretizationSteps(
 decltype(auto) PPFRegistration::getFinalTransformation() {
   return this->finalTransformation;
 }
-template<class T>
-typename pcl::PointCloud<T>::Ptr PPFRegistration::aligen(const typename pcl::PointCloud<T>::Ptr &input) {
-  typename pcl::PointCloud<T>::Ptr output = boost::make_shared<pcl::PointCloud<T>>();
-    pcl::transformPointCloud(*input,*output,finalTransformation);
-    return output;
+template <class T>
+typename pcl::PointCloud<T>::Ptr PPFRegistration::aligen(
+    const typename pcl::PointCloud<T>::Ptr &input) {
+  typename pcl::PointCloud<T>::Ptr output =
+      boost::make_shared<pcl::PointCloud<T>>();
+  pcl::transformPointCloud(*input, *output, finalTransformation);
+  return output;
 }
-void PPFRegistration::setModelTripleSet(const std::vector<pcl::PointXYZ> &triple_set) {
-  this->triple_set.resize(triple_set.size());
-  for(size_t i = 0;i<this->triple_set.size();++i){
+void PPFRegistration::setModelTripleSet(
+    const std::vector<pcl::PointXYZ> &triple_set) {
+  for (size_t i = 0; i < 3; ++i) {
     this->triple_set.push_back(triple_set[i]);
   }
 }
-
+void PPFRegistration::setDobj(const float &data) {
+  this->d_obj = data;
+}
 void PPFRegistration::compute() {
+  //pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+
   pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector4f p1{};
@@ -61,18 +73,18 @@ void PPFRegistration::compute() {
   Eigen::Vector4f n2{};
   Eigen::Vector4f delta{};
   auto tp1 = boost::chrono::steady_clock::now();
-
-  for(auto i = 0;i<scene_cloud_with_normal->points.size();++i){
-    for(auto j = 0;j<scene_cloud_with_normal->points.size();++j){
-      if(i == j){
+  pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(new pcl::PointCloud<pcl::PointXYZ>());
+  for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
+    for (auto j = 0; j < scene_cloud_with_normal->points.size()/10; ++j) {
+      if (i == j) {
         continue;
-      }else{
+      } else {
         p1 << scene_cloud_with_normal->points[i].x,
-            scene_cloud_with_normal->points[i].y, scene_cloud_with_normal->points[i].z,
-            0.0f;
+            scene_cloud_with_normal->points[i].y,
+            scene_cloud_with_normal->points[i].z, 0.0f;
         p2 << scene_cloud_with_normal->points[j].x,
-            scene_cloud_with_normal->points[j].y, scene_cloud_with_normal->points[j].z,
-            0.0f;
+            scene_cloud_with_normal->points[j].y,
+            scene_cloud_with_normal->points[j].z, 0.0f;
         n1 << scene_cloud_with_normal->points[i].normal_x,
             scene_cloud_with_normal->points[i].normal_y,
             scene_cloud_with_normal->points[i].normal_z, 0.0f;
@@ -82,10 +94,11 @@ void PPFRegistration::compute() {
 
         delta = p2 - p1;
         float f4 = delta.norm();
-
+        if(f4>d_obj){
+          continue;
+        }
         // normalize
         delta /= f4;
-
 
         float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
 
@@ -93,9 +106,11 @@ void PPFRegistration::compute() {
 
         float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
 
-        /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  * delta.z();
+        /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  *
+        delta.z();
 
-        float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  * delta.z();
+        float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  *
+        delta.z();
 
         float f3 = n1.x() * n2.x() + n1.y()  * n2.y()  + n1.z()  * n2.z() ;
          */
@@ -104,12 +119,10 @@ void PPFRegistration::compute() {
         feature.f3 = f3;
         feature.f4 = f4;
         feature.alpha_m = 0.0f;
-        data.second.Or =
-            (std::make_pair(n1.cross3(delta),
-                            std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
-        data.second.Ot =
-            (std::make_pair(n2.cross3(delta),
-                            std::make_pair(n2.cross3(n2.cross3(delta)), n2)));
+        data.second.Or = (std::make_pair(
+            n1.cross3(delta), std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
+        data.second.Ot = (std::make_pair(
+            n2.cross3(delta), std::make_pair(n2.cross3(n2.cross3(delta)), n2)));
 
         data.first.k1 =
             static_cast<int>(std::floor(f1 / angle_discretization_step));
@@ -120,37 +133,96 @@ void PPFRegistration::compute() {
         data.first.k4 =
             static_cast<int>(std::floor(f4 / distance_discretization_step));
 
-        if(searchMap->find(data.first)){
-            auto model_lrf = this->searchMap->getData(data.first);
-            Eigen::Matrix3f model_lrf_Or;
-            Eigen::Matrix3f model_lrf_Ot;
-            Eigen::Matrix3f scene_lrf_Or;
-            Eigen::Matrix3f scene_lrf_Ot;
+        data.second.r = scene_cloud_with_normal->points[i];
+        data.second.t = scene_cloud_with_normal->points[j];
+        if (searchMap->find(data.first)) {
+          auto model_lrf = this->searchMap->getData(data.first);
+          Eigen::Matrix3f model_lrf_Or;
+          Eigen::Matrix3f model_lrf_Ot;
+          Eigen::Matrix3f scene_lrf_Or;
+          Eigen::Matrix3f scene_lrf_Ot;
 
-            model_lrf_Or<<
-                model_lrf.Or.first[0], model_lrf.Or.second.first[0], model_lrf.Or.second.second[0],
-                model_lrf.Or.first[1], model_lrf.Or.second.first[1], model_lrf.Or.second.second[1],
-                model_lrf.Or.first[2], model_lrf.Or.second.first[2], model_lrf.Or.second.second[2];
-            model_lrf_Ot<<
-                model_lrf.Ot.first[0], model_lrf.Ot.second.first[0], model_lrf.Ot.second.second[0],
-                model_lrf.Ot.first[1], model_lrf.Ot.second.first[1], model_lrf.Ot.second.second[1],
-                model_lrf.Ot.first[2], model_lrf.Ot.second.first[2], model_lrf.Ot.second.second[2];
-            scene_lrf_Or<<
-                data.second.Or.first[0], data.second.Or.second.first[0], data.second.Or.second.second[0],
-                data.second.Or.first[1], data.second.Or.second.first[1], data.second.Or.second.second[1],
-                data.second.Or.first[2], data.second.Or.second.first[2], data.second.Or.second.second[2];
-            scene_lrf_Ot<<
-                data.second.Ot.first[0], data.second.Ot.second.first[0], data.second.Ot.second.second[0],
-                data.second.Ot.first[1], data.second.Ot.second.first[1], data.second.Ot.second.second[1],
-                data.second.Ot.first[2], data.second.Ot.second.first[2], data.second.Ot.second.second[2];
-            //Eigen::Matrix4f{data.second.Or * model_lrf.Or};
-            Eigen::Matrix3f R_1{scene_lrf_Or.transpose()*model_lrf_Or};
-            std::cout<<R_1<<std::endl;
-        }else{
+          model_lrf_Or<<
+              model_lrf.Or.first[0], model_lrf.Or.second.first[0], model_lrf.Or.second.second[0],
+              model_lrf.Or.first[1], model_lrf.Or.second.first[1], model_lrf.Or.second.second[1],
+              model_lrf.Or.first[2], model_lrf.Or.second.first[2], model_lrf.Or.second.second[2];
+          model_lrf_Ot<<
+              model_lrf.Ot.first[0], model_lrf.Ot.second.first[0], model_lrf.Ot.second.second[0],
+              model_lrf.Ot.first[1], model_lrf.Ot.second.first[1], model_lrf.Ot.second.second[1],
+              model_lrf.Ot.first[2], model_lrf.Ot.second.first[2], model_lrf.Ot.second.second[2];
+          scene_lrf_Or<<
+              data.second.Or.first[0], data.second.Or.second.first[0], data.second.Or.second.second[0],
+              data.second.Or.first[1], data.second.Or.second.first[1], data.second.Or.second.second[1],
+              data.second.Or.first[2], data.second.Or.second.first[2], data.second.Or.second.second[2];
+          scene_lrf_Ot<<
+              data.second.Ot.first[0], data.second.Ot.second.first[0], data.second.Ot.second.second[0],
+              data.second.Ot.first[1], data.second.Ot.second.first[1], data.second.Ot.second.second[1],
+              data.second.Ot.first[2], data.second.Ot.second.first[2], data.second.Ot.second.second[2];
+          //Eigen::Matrix4f{data.second.Or * model_lrf.Or};
+
+          Eigen::Matrix3f R_1{scene_lrf_Or.transpose() * model_lrf_Or};
+          Eigen::Matrix3f R_2{scene_lrf_Ot.transpose() * model_lrf_Ot};
+
+          Eigen::Vector4f t_1{};
+          Eigen::Vector4f t_2{};
+          Eigen::Vector3f m_1{model_lrf.r.x, model_lrf.r.y, model_lrf.r.z};
+          Eigen::Vector3f m_2{model_lrf.t.x, model_lrf.t.y, model_lrf.t.z};
+
+          m_1 = R_1*m_1;
+          m_2 = R_1*m_2;
+
+          t_1 << data.second.r.x - m_1[0],
+              data.second.r.y - m_1[1], data.second.r.z - m_1[2],
+              1.0f;
+          t_2 << data.second.t.x - m_2[0],
+              data.second.t.y - m_2[1], data.second.t.z - m_2[2],
+              1.0f;
+          // std::cout<<R_1<<std::endl;
+
+          Eigen::Matrix4f T_1{};
+          Eigen::Matrix4f T_2{};
+
+          T_1<<R_1(0,0), R_1(0,1), R_1(0,2), t_1[0],
+              R_1(1,0), R_1(1,1), R_1(1,2), t_1[1],
+              R_1(2,0), R_1(2,1), R_1(2,2), t_1[2],
+              0.0f, 0.0f, 0.0f, t_1[3];
+          T_2<<R_2(0,0), R_2(0,1), R_2(0,2), t_2[0],
+              R_2(1,0), R_2(1,1), R_2(1,2), t_2[1],
+              R_2(2,0), R_2(2,1), R_2(2,2), t_2[2],
+              0.0f, 0.0f, 0.0f, t_1[3];
+
+          pcl::PointXYZ p;
+          Eigen::Affine3f transform_1(T_1);
+          Eigen::Affine3f transform_2(T_2);
+          for(int i = 0;i<3;i++){
+            Eigen::Vector3f m{};
+            Eigen::Vector3f s{};
+            m<<triple_set[i].x, triple_set[i].y, triple_set[i].z;
+            s<<0.0f, 0.0f, 0.0f;
+            pcl::transformPoint(m,s,transform_1);
+            triple_scene->points.emplace_back(s[0],s[1],s[2]);
+            pcl::transformPoint(m,s,transform_2);
+            triple_scene->points.emplace_back(s[0],s[1],s[2]);
+          }
+
+        } else {
           continue;
         }
-
       }
     }
   }
+
+  pcl::visualization::PCLVisualizer view("subsampled point cloud");
+  view.setBackgroundColor(0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+      triple_scene, 255, 0, 0);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
+      scene_cloud_with_normal, 255, 255, 255);
+  view.addPointCloud(triple_scene, red, "triple");
+  view.addPointCloud(scene_cloud_with_normal, white, "scene");
+  while (!view.wasStopped()) {
+    view.spinOnce(100);
+    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+  }
+
 }

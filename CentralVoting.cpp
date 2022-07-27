@@ -27,7 +27,7 @@ void CentralVoting::CenterExtractor(int index) {
   feature_extractor.getMassCenter(mass_center);
   std::cout << "min_point:" << min_point_AABB << std::endl
             << "max_point:" << max_point_AABB << std::endl;
-  pcl::visualization::PCLVisualizer view("model with center point");
+  //pcl::visualization::PCLVisualizer view("model with center point");
 
   pcl::PointXYZ center_(mass_center(0), mass_center(1), mass_center(2));
   pcl::PointXYZ x_axis(major_vector(0) * 100 + mass_center(0),
@@ -48,6 +48,7 @@ void CentralVoting::CenterExtractor(int index) {
   double d_obj = std::sqrt(std::pow(max_point_AABB.x - min_point_AABB.x, 2) +
                            std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
+  this->d_obj_set.push_back(static_cast<float>(d_obj));
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
 
@@ -144,6 +145,8 @@ void CentralVoting::Solve() {
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
     ppf_registration.setInputSource(cloud_models_with_normal[model_i]);
     ppf_registration.setInputTarget(this->scene_subsampled);
+    ppf_registration.setModelTripleSet(this->triple_set[model_i]);
+    ppf_registration.setDobj(this->d_obj_set[model_i]);
     ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
     ppf_registration.compute();
   }

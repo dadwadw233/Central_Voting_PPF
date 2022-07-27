@@ -34,6 +34,8 @@ class PPFRegistration{
   void setDiscretizationSteps(const float &angle_discretization_step,
                               const float &distance_discretization_step);
 
+  void setDobj(const float &data);
+
   void setModelTripleSet(const std::vector<pcl::PointXYZ>&triple_set);
   PPFRegistration &operator=(const PPFRegistration &) = delete;
   PPFRegistration(const PPFRegistration &) = delete;
@@ -49,6 +51,7 @@ class PPFRegistration{
   std::vector<pcl::PointXYZ>triple_set;
   float angle_discretization_step;
   float distance_discretization_step;
+  float d_obj;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H

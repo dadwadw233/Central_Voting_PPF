@@ -104,5 +104,6 @@ class CentralVoting {
   float AngleThreshold;
   float distanceThreshold;
   float normalEstimationRadius;
+  std::vector<float>d_obj_set;
 };
 #endif  // CENTRAL_VOTING_CENTRALVOTING_H
