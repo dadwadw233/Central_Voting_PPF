@@ -62,9 +62,40 @@ void PPFRegistration::setModelTripleSet(
 void PPFRegistration::setDobj(const float &data) {
   this->d_obj = data;
 }
+void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
+  if(map.find(key)!=map.end()){
+    (map.find(key)->second).value+=1;
+  }else{
+    struct data d(T,1);
+    map.emplace(key,d);
+  }
+}
+
+void PPFRegistration::establishVoxelGrid() {
+  pcl::PointNormal max_point, min_point;
+  pcl::MomentOfInertiaEstimation<pcl::PointNormal> feature_extractor;
+  feature_extractor.setInputCloud(this->scene_cloud_with_normal);
+  feature_extractor.compute();
+  feature_extractor.getAABB(min_point, max_point);
+  this->x_range =  std::make_pair(min_point.x, max_point.x);
+  this->y_range = std::make_pair(min_point.y, max_point.y);
+  this->z_range = std::make_pair(min_point.z, max_point.z);
+}
+
 void PPFRegistration::compute() {
   //pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  establishVoxelGrid();
+  auto xr =
+      std::abs(static_cast<float>(this->x_range.second - this->x_range.first));
+  auto yr =
+      std::abs(static_cast<float>(this->y_range.second - this->y_range.first));
+  auto zr =
+      std::abs(static_cast<float>(this->z_range.second - this->z_range.first));
 
+
+  auto x_num = static_cast<long long int>(std::ceil(xr / this->clustering_position_diff_threshold));
+  auto y_num = static_cast<long long int>(std::ceil(yr / this->clustering_position_diff_threshold));
+  auto z_num = static_cast<long long int>(std::ceil(zr / this->clustering_position_diff_threshold));
   pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector4f p1{};
@@ -75,7 +106,7 @@ void PPFRegistration::compute() {
   auto tp1 = boost::chrono::steady_clock::now();
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(new pcl::PointCloud<pcl::PointXYZ>());
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
-    for (auto j = 0; j < scene_cloud_with_normal->points.size()/10; ++j) {
+    for (auto j = 0; j < scene_cloud_with_normal->points.size(); ++j) {
       if (i == j) {
         continue;
       } else {
@@ -194,17 +225,59 @@ void PPFRegistration::compute() {
           pcl::PointXYZ p;
           Eigen::Affine3f transform_1(T_1);
           Eigen::Affine3f transform_2(T_2);
+          int index_1,index_2;
+          index_1 = 0;
+          index_2 = 0;
           for(int i = 0;i<3;i++){
             Eigen::Vector3f m{};
             Eigen::Vector3f s{};
             m<<triple_set[i].x, triple_set[i].y, triple_set[i].z;
             s<<0.0f, 0.0f, 0.0f;
             pcl::transformPoint(m,s,transform_1);
+            int xCell =
+                static_cast<int>(std::ceil(
+                    (s[0] - this->x_range.first) / clustering_position_diff_threshold)) == 0
+                    ? 1
+                    : static_cast<int>(std::ceil(
+                          (s[0]- this->x_range.first) / clustering_position_diff_threshold));
+            int yCell =
+                static_cast<int>(std::ceil(
+                    (s[1] - this->y_range.first) / clustering_position_diff_threshold)) == 0
+                    ? 1
+                    : static_cast<int>(std::ceil(
+                          (s[1] - this->y_range.first) / clustering_position_diff_threshold));
+            int zCell =
+                static_cast<int>(std::ceil(
+                    (s[2] - this->z_range.first) / clustering_position_diff_threshold)) == 0
+                    ? 1
+                    : static_cast<int>(std::ceil(
+                          (s[2] - this->z_range.first) / clustering_position_diff_threshold));
             triple_scene->points.emplace_back(s[0],s[1],s[2]);
+            index_1 += (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
             pcl::transformPoint(m,s,transform_2);
+            xCell =
+                static_cast<int>(std::ceil(
+                    (s[0] - this->x_range.first) / clustering_position_diff_threshold)) == 0
+                    ? 1
+                    : static_cast<int>(std::ceil(
+                          (s[0]- this->x_range.first) / clustering_position_diff_threshold));
+            yCell =
+                static_cast<int>(std::ceil(
+                    (s[1] - this->y_range.first) / clustering_position_diff_threshold)) == 0
+                    ? 1
+                    : static_cast<int>(std::ceil(
+                          (s[1] - this->y_range.first) / clustering_position_diff_threshold));
+            zCell =
+                static_cast<int>(std::ceil(
+                    (s[2] - this->z_range.first) / clustering_position_diff_threshold)) == 0
+                    ? 1
+                    : static_cast<int>(std::ceil(
+                          (s[2] - this->z_range.first) / clustering_position_diff_threshold));
             triple_scene->points.emplace_back(s[0],s[1],s[2]);
+            index_2 += (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
           }
-
+          this->vote(index_1,transform_1);
+          this->vote(index_2,transform_2);
         } else {
           continue;
         }
@@ -218,7 +291,7 @@ tree->setInputCloud(triple_scene);
 std::vector<pcl::PointIndices>cluster_indices;
 pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
 ec.setClusterTolerance(this->clustering_position_diff_threshold);
-ec.setMinClusterSize(30);
+ec.setMinClusterSize(20);
 ec.setMaxClusterSize(25000);
 ec.setSearchMethod(tree);
 ec.setInputCloud(triple_scene);

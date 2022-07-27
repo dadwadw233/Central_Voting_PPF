@@ -38,13 +38,29 @@ class PPFRegistration{
   void setDobj(const float &data);
 
   void setModelTripleSet(const std::vector<pcl::PointXYZ>&triple_set);
+
+  void vote(const int &key,const Eigen::Affine3f &T);
+
+  void establishVoxelGrid();
+
   PPFRegistration &operator=(const PPFRegistration &) = delete;
   PPFRegistration(const PPFRegistration &) = delete;
 
  private:
+  struct data{
+    Eigen::Affine3f T;
+    int value;
+    data(const Eigen::Affine3f &T_, const int value_){
+      T = T_;
+      value = value_;
+    }
+  };
   float scene_reference_point_sampling_rate{};
   float clustering_position_diff_threshold{};
   float clustering_rotation_diff_threshold{};
+  std::pair<double, double> x_range;
+  std::pair<double, double> y_range;
+  std::pair<double, double> z_range;
   pcl::PointCloud<pcl::PointNormal>::Ptr model_cloud_with_normal;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Matrix4f finalTransformation;
@@ -53,6 +69,7 @@ class PPFRegistration{
   float angle_discretization_step;
   float distance_discretization_step;
   float d_obj;
+  std::unordered_map<int, struct data>map;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H
