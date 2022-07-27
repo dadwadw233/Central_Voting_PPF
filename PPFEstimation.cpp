@@ -96,6 +96,9 @@ void PPFEstimation::compute(
               static_cast<int>(std::floor(f3 / angle_discretization_step));
           data.first.k4 =
               static_cast<int>(std::floor(f4 / distance_discretization_step));
+
+          data.second.r = input_point_normal->points[i];
+          data.second.t = input_point_normal->points[j];
 // std::cout << i << " " << j << std::endl;
 #pragma omp critical
           hash_map->addInfo(data);

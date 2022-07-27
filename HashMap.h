@@ -43,6 +43,8 @@ namespace Hash {
 struct HashData {
   std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>> Or;
   std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>> Ot;
+  pcl::PointNormal r;
+  pcl::PointNormal t;
 };
 struct HashKey {
   int k1;
