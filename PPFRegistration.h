@@ -15,7 +15,7 @@ class PPFRegistration{
 
   void compute();
 
-  decltype(auto) getFinalTransformation();
+  Eigen::Affine3f getFinalTransformation();
 
   template <class T>
   typename pcl::PointCloud<T>::Ptr aligen(const typename pcl::PointCloud<T>::Ptr &input);
@@ -63,7 +63,7 @@ class PPFRegistration{
   std::pair<double, double> z_range;
   pcl::PointCloud<pcl::PointNormal>::Ptr model_cloud_with_normal;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
-  Eigen::Matrix4f finalTransformation;
+  Eigen::Affine3f finalTransformation;
   Hash::Ptr searchMap;
   std::vector<pcl::PointXYZ>triple_set;
   float angle_discretization_step;

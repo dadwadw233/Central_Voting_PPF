@@ -97,6 +97,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
                                 std::make_pair(min_point.y, max_point.y),
                                 std::make_pair(min_point.z, max_point.z),
                                 this->step, this->AngleThreshold, 0.01);
+  sample_filter.setIsdense(false);
   sample_filter.setRadius(this->normalEstimationRadius);
   return sample_filter.compute();
 }
@@ -116,12 +117,6 @@ void CentralVoting::Solve() {
     PCL_INFO("begin to establish ppf\n");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
         new pcl::PointCloud<pcl::PPFSignature>());
-    /*pcl::PPFEstimation<pcl::PointNormal, pcl::PointNormal, pcl::PPFSignature>
-        ppf_estimator;
-    ppf_estimator.setInputCloud(model_with_normal);
-    ppf_estimator.setInputNormals(model_with_normal);
-    ppf_estimator.compute(*cloud_model_ppf);
-     */
 
     Hash::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
@@ -136,6 +131,8 @@ void CentralVoting::Solve() {
 
   PCL_INFO("Registering models to scene ...\n");
 
+    pcl::visualization::PCLVisualizer view("registration result");
+    view.setBackgroundColor(0, 0, 0);
   for(std::size_t model_i = 0; model_i < model_set.size(); ++model_i){
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
@@ -149,6 +146,25 @@ void CentralVoting::Solve() {
     ppf_registration.setDobj(this->d_obj_set[model_i]);
     ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
     ppf_registration.compute();
+    Eigen::Affine3f T = ppf_registration.getFinalTransformation();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(new pcl::PointCloud<pcl::PointXYZ>());
+    pcl::transformPointCloud(*this->model_set[model_i], *output_model, T);
+
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+        output_model, 255, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> white(
+        this->scene, 255, 255, 255);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> s(
+        this->model_set[model_i], 0, 255, 0);
+    //view.addPointCloud(model_set[model_i], red, "model");
+    view.addPointCloud(output_model, red, "out");
+    view.addPointCloud(this->scene, white, "scene");
+
+  }
+
+  while (!view.wasStopped()) {
+    view.spinOnce(100);
+    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
 }
 
