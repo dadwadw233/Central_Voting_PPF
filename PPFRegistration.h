@@ -5,6 +5,7 @@
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "HashMap.h"
+#include <pcl/segmentation/extract_clusters.h>
 #ifndef CENTRAL_VOTING_PPFREGISTRATION_H
 #define CENTRAL_VOTING_PPFREGISTRATION_H
 

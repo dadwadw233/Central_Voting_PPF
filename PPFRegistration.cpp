@@ -211,14 +211,32 @@ void PPFRegistration::compute() {
       }
     }
   }
+  pcl::PointCloud<pcl::PointXYZ>::Ptr triple(new pcl::PointCloud<pcl::PointXYZ>());
+pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
+tree->setInputCloud(triple_scene);
+
+std::vector<pcl::PointIndices>cluster_indices;
+pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+ec.setClusterTolerance(this->clustering_position_diff_threshold);
+ec.setMinClusterSize(30);
+ec.setMaxClusterSize(25000);
+ec.setSearchMethod(tree);
+ec.setInputCloud(triple_scene);
+ec.extract(cluster_indices);
+
+for(auto i = cluster_indices.begin();i!=cluster_indices.end();++i){
+  for(auto j = 0;j<i->indices.size();j++){
+    triple->points.push_back(triple_scene->points[i->indices[j]]);
+  }
+}
 
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-      triple_scene, 255, 0, 0);
+      triple, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
-  view.addPointCloud(triple_scene, red, "triple");
+  view.addPointCloud(triple, red, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
   while (!view.wasStopped()) {
     view.spinOnce(100);
