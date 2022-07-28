@@ -108,14 +108,15 @@ void PPFRegistration::compute() {
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
-#pragma omp parallel for shared(x_num,y_num,z_num,zr,xr,yr,i,triple_scene) private(p1,p2,n1,n2,delta,feature,data) default(none) \
+#pragma omp parallel for shared(                                              \
+    x_num, y_num, z_num, zr, xr, yr, i,                                       \
+    triple_scene) private(p1, p2, n1, n2, delta, feature, data) default(none) \
     num_threads(15)
-    for (auto j = 0; j < scene_cloud_with_normal->points.size()/10;
-         ++j) {
+    for (auto j = 0; j < scene_cloud_with_normal->points.size() / 10; ++j) {
       if (i == j) {
         continue;
       } else {
-       // triple_scene.reset();
+        // triple_scene.reset();
         p1 << scene_cloud_with_normal->points[i].x,
             scene_cloud_with_normal->points[i].y,
             scene_cloud_with_normal->points[i].z, 0.0f;
@@ -261,7 +262,7 @@ void PPFRegistration::compute() {
                             : static_cast<int>(std::ceil(
                                   (s[2] - this->z_range.first) /
                                   clustering_position_diff_threshold));
-            if(i == 0){
+            if (i == 0) {
 #pragma omp critical
               triple_scene->points.emplace_back(s[0], s[1], s[2]);
             }
@@ -290,7 +291,7 @@ void PPFRegistration::compute() {
                         : static_cast<int>(
                               std::ceil((s[2] - this->z_range.first) /
                                         clustering_position_diff_threshold));
-            if(i == 0){
+            if (i == 0) {
 #pragma omp critical
               triple_scene->points.emplace_back(s[0], s[1], s[2]);
             }
@@ -314,9 +315,10 @@ void PPFRegistration::compute() {
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
       new pcl::search::KdTree<pcl::PointXYZ>());
-  pcl::PointCloud<pcl::PointXYZ>::Ptr temp(new pcl::PointCloud<pcl::PointXYZ>());
-  std::vector<int>indices;
-  pcl::removeNaNFromPointCloud(*triple_scene,*temp, indices);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr temp(
+      new pcl::PointCloud<pcl::PointXYZ>());
+  std::vector<int> indices;
+  pcl::removeNaNFromPointCloud(*triple_scene, *temp, indices);
   tree->setInputCloud(temp);
 
   std::vector<pcl::PointIndices> cluster_indices;
@@ -330,17 +332,18 @@ void PPFRegistration::compute() {
 
   int final_key = -1;
   int max_vote = 0;
-  for(auto i :this->map){
-    if(i.second.value>max_vote){
+  for (auto i : this->map) {
+    if (i.second.value > max_vote) {
       max_vote = i.second.value;
       final_key = i.first;
-    }else{
+    } else {
       continue;
     }
   }
-  std::cout<<"final vote: "<<max_vote<<std::endl;
+  std::cout << "final vote: " << max_vote << std::endl;
   this->finalTransformation = map.find(final_key)->second.T;
-  std::cout<<"transform matrix: "<<std::endl<<this->finalTransformation.matrix();
+  std::cout << "transform matrix: " << std::endl
+            << this->finalTransformation.matrix();
   /**generate cluster **/
 
   for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
@@ -349,14 +352,12 @@ void PPFRegistration::compute() {
     }
   }
 
-/*visualize*/
+  /*visualize*/
 
-  std::cout<<"\ntriple size: "<<triple_scene->size()<<std::endl;
+  std::cout << "\ntriple size: " << triple_scene->size() << std::endl;
   /*for(auto i:triple_scene->points){
     std::cout<<i<<std::endl;
   }*/
-
-
 
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
@@ -370,5 +371,4 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-
 }

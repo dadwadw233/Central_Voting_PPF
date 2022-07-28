@@ -21,14 +21,14 @@ int main(int argc, char** argv) {
 
   reader.read(argv[1], *model);
   reader.read(argv[2], *scene);
-  std::cout<<argv[1]<<" "<<argv[2]<<std::endl;
-  CentralVoting handle(scene,model);
-   handle.CenterExtractorAll();
+  std::cout << argv[1] << " " << argv[2] << std::endl;
+  CentralVoting handle(scene, model);
+  handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(10.0f);
   handle.setDownSampleStep(10.0f);
   handle.setAngleThreshold(30);
   handle.setSimpleDownSampleLeaf(Eigen::Vector4f(4.0f, 4.0f, 4.0f, 0.0f));
-   //handle.test();
+  // handle.test();
   handle.Solve();
   return 0;
 }

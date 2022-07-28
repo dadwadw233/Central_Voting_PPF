@@ -71,7 +71,8 @@ class CentralVoting {
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) const;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr SimpleDownSample(pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr SimpleDownSample(
+      pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
   void Solve();
 
@@ -104,6 +105,6 @@ class CentralVoting {
   float AngleThreshold;
   float distanceThreshold;
   float normalEstimationRadius;
-  std::vector<float>d_obj_set;
+  std::vector<float> d_obj_set;
 };
 #endif  // CENTRAL_VOTING_CENTRALVOTING_H

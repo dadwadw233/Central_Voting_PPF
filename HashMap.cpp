@@ -29,9 +29,9 @@ HashData HashMap::getData(Hash::HashKey &key) {
 }
 
 bool HashMap::find(Hash::HashKey &key) {
-  if(map.find(key)!=map.end()){
+  if (map.find(key) != map.end()) {
     return true;
-  }else{
+  } else {
     return false;
   }
 }

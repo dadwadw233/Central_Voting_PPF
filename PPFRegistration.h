@@ -1,15 +1,15 @@
 //
 // Created by yyh on 22-7-26.
 //
-#include "pcl/registration/registration.h"
+#include <pcl/segmentation/extract_clusters.h>
+#include "HashMap.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
-#include "HashMap.h"
-#include <pcl/segmentation/extract_clusters.h>
+#include "pcl/registration/registration.h"
 #ifndef CENTRAL_VOTING_PPFREGISTRATION_H
 #define CENTRAL_VOTING_PPFREGISTRATION_H
 
-class PPFRegistration{
+class PPFRegistration {
  public:
   PPFRegistration();
 
@@ -18,13 +18,17 @@ class PPFRegistration{
   Eigen::Affine3f getFinalTransformation();
 
   template <class T>
-  typename pcl::PointCloud<T>::Ptr aligen(const typename pcl::PointCloud<T>::Ptr &input);
+  typename pcl::PointCloud<T>::Ptr aligen(
+      const typename pcl::PointCloud<T>::Ptr &input);
 
-  void setSceneReferencePointSamplingRate(const float &scene_reference_point_sampling_rate);
+  void setSceneReferencePointSamplingRate(
+      const float &scene_reference_point_sampling_rate);
 
-  void setPositionClusteringThreshold(const float &clustering_position_diff_threshold);
+  void setPositionClusteringThreshold(
+      const float &clustering_position_diff_threshold);
 
-  void setRotationClusteringThreshold(const float &clustering_rotation_diff_threshold);
+  void setRotationClusteringThreshold(
+      const float &clustering_rotation_diff_threshold);
 
   void setSearchMap(const Hash::Ptr &searchMap);
 
@@ -37,9 +41,9 @@ class PPFRegistration{
 
   void setDobj(const float &data);
 
-  void setModelTripleSet(const std::vector<pcl::PointXYZ>&triple_set);
+  void setModelTripleSet(const std::vector<pcl::PointXYZ> &triple_set);
 
-  void vote(const int &key,const Eigen::Affine3f &T);
+  void vote(const int &key, const Eigen::Affine3f &T);
 
   void establishVoxelGrid();
 
@@ -47,10 +51,10 @@ class PPFRegistration{
   PPFRegistration(const PPFRegistration &) = delete;
 
  private:
-  struct data{
+  struct data {
     Eigen::Affine3f T;
     int value;
-    data(const Eigen::Affine3f &T_, const int value_){
+    data(const Eigen::Affine3f &T_, const int value_) {
       T = T_;
       value = value_;
     }
@@ -65,11 +69,11 @@ class PPFRegistration{
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Affine3f finalTransformation;
   Hash::Ptr searchMap;
-  std::vector<pcl::PointXYZ>triple_set;
+  std::vector<pcl::PointXYZ> triple_set;
   float angle_discretization_step;
   float distance_discretization_step;
   float d_obj;
-  std::unordered_map<int, struct data>map;
+  std::unordered_map<int, struct data> map;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H

@@ -63,19 +63,20 @@ void PPFEstimation::compute(
           // normalize
           delta /= f4;
 
-
           float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
 
           float f2 = n1[0] * delta[0] + n2[1] * delta[1] + n2[2] * delta[2];
 
           float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
 
-           /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  * delta.z();
+          /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  *
+          delta.z();
 
-           float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  * delta.z();
+          float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  *
+          delta.z();
 
-           float f3 = n1.x() * n2.x() + n1.y()  * n2.y()  + n1.z()  * n2.z() ;
-            */
+          float f3 = n1.x() * n2.x() + n1.y()  * n2.y()  + n1.z()  * n2.z() ;
+           */
           feature.f1 = f1;
           feature.f2 = f2;
           feature.f3 = f3;
@@ -105,7 +106,6 @@ void PPFEstimation::compute(
 
 #pragma omp critical
           output_cloud->points.push_back(feature);
-
         }
       }
     }

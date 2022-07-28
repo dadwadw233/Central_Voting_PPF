@@ -3,8 +3,8 @@
 //
 #include "CentralVoting.h"
 #include "PPFEstimation.h"
-#include "SmartDownSample.h"
 #include "PPFRegistration.h"
+#include "SmartDownSample.h"
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
@@ -27,7 +27,7 @@ void CentralVoting::CenterExtractor(int index) {
   feature_extractor.getMassCenter(mass_center);
   std::cout << "min_point:" << min_point_AABB << std::endl
             << "max_point:" << max_point_AABB << std::endl;
-  //pcl::visualization::PCLVisualizer view("model with center point");
+  // pcl::visualization::PCLVisualizer view("model with center point");
 
   pcl::PointXYZ center_(mass_center(0), mass_center(1), mass_center(2));
   pcl::PointXYZ x_axis(major_vector(0) * 100 + mass_center(0),
@@ -41,15 +41,15 @@ void CentralVoting::CenterExtractor(int index) {
                        minor_vector(2) * 100 + mass_center(2));
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> model_color(
       255, 255, 255);
-  //std::cout<<" center: "<<center<<std::endl;
+  // std::cout<<" center: "<<center<<std::endl;
   pcl::PointXYZ p_faux(center[0], center[1], center[2]);
   pcl::PointXYZ p_saux(center[0], center[1], center[2]);
   pcl::PointXYZ c(center[0], center[1], center[2]);
-  //std::vector<pcl::PointXYZ> triple;
+  // std::vector<pcl::PointXYZ> triple;
   double d_obj = std::sqrt(std::pow(max_point_AABB.x - min_point_AABB.x, 2) +
                            std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
-  //std::cout<<" d_obj: "<<d_obj<<std::endl;
+  // std::cout<<" d_obj: "<<d_obj<<std::endl;
   this->d_obj_set.push_back(static_cast<float>(d_obj));
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
@@ -57,37 +57,37 @@ void CentralVoting::CenterExtractor(int index) {
   this->triple_set[index].push_back(c);
   this->triple_set[index].push_back(p_faux);
   this->triple_set[index].push_back(p_saux);
-/*
-  pcl::PointCloud<pcl::PointXYZ>::Ptr triple_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>());
-  triple_cloud->points.push_back(center_);
-  triple_cloud->points.push_back(p_faux);
-  triple_cloud->points.push_back(p_saux);
+  /*
+    pcl::PointCloud<pcl::PointXYZ>::Ptr triple_cloud(
+        new pcl::PointCloud<pcl::PointXYZ>());
+    triple_cloud->points.push_back(center_);
+    triple_cloud->points.push_back(p_faux);
+    triple_cloud->points.push_back(p_saux);
 
-  // visualize
-  view.addPointCloud(this->model_set[index], model_color, "model");
+    // visualize
+    view.addPointCloud(this->model_set[index], model_color, "model");
 
-  view.setBackgroundColor(0, 0, 0);
+    view.setBackgroundColor(0, 0, 0);
 
-  view.addCube(min_point_AABB.x, max_point_AABB.x, min_point_AABB.y,
-               max_point_AABB.y, min_point_AABB.z, max_point_AABB.z, 1.0, 1.0,
-               0.0, "AABB");
-  view.setShapeRenderingProperties(
-      pcl::visualization::PCL_VISUALIZER_REPRESENTATION,
-      pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "AABB");
-  view.addLine(center_, x_axis, 1.0f, 0.0f, 0.0f, "major eigen vector");
-  view.addLine(center_, y_axis, 0.0f, 1.0f, 0.0f, "middle eigen vector");
-  view.addLine(center_, z_axis, 0.0f, 0.0f, 1.0f, "minor eigen vector");
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-      triple_cloud, 255, 0, 0);
-  view.addPointCloud(triple_cloud, red, "triple");
-  view.setPointCloudRenderingProperties(
-      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "triple");
+    view.addCube(min_point_AABB.x, max_point_AABB.x, min_point_AABB.y,
+                 max_point_AABB.y, min_point_AABB.z, max_point_AABB.z, 1.0, 1.0,
+                 0.0, "AABB");
+    view.setShapeRenderingProperties(
+        pcl::visualization::PCL_VISUALIZER_REPRESENTATION,
+        pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "AABB");
+    view.addLine(center_, x_axis, 1.0f, 0.0f, 0.0f, "major eigen vector");
+    view.addLine(center_, y_axis, 0.0f, 1.0f, 0.0f, "middle eigen vector");
+    view.addLine(center_, z_axis, 0.0f, 0.0f, 1.0f, "minor eigen vector");
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+        triple_cloud, 255, 0, 0);
+    view.addPointCloud(triple_cloud, red, "triple");
+    view.setPointCloudRenderingProperties(
+        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "triple");
 
-  while (!view.wasStopped()) {
-    view.spinOnce(100);
-    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-  }*/
+    while (!view.wasStopped()) {
+      view.spinOnce(100);
+      boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    }*/
 }
 
 pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
@@ -106,8 +106,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 
 void CentralVoting::Solve() {
   auto scene_cloud = SimpleDownSample(scene);
-  this->scene_subsampled  = DownSample(scene_cloud);
-  //pcl::copyPointCloud(*scene, *this->scene_subsampled);
+  this->scene_subsampled = DownSample(scene_cloud);
+  // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
@@ -133,9 +133,9 @@ void CentralVoting::Solve() {
 
   PCL_INFO("Registering models to scene ...\n");
 
-    pcl::visualization::PCLVisualizer view("registration result");
-    view.setBackgroundColor(0, 0, 0);
-  for(std::size_t model_i = 0; model_i < model_set.size(); ++model_i){
+  pcl::visualization::PCLVisualizer view("registration result");
+  view.setBackgroundColor(0, 0, 0);
+  for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
     ppf_registration.setPositionClusteringThreshold(0.02);
@@ -146,10 +146,12 @@ void CentralVoting::Solve() {
     ppf_registration.setInputTarget(this->scene_subsampled);
     ppf_registration.setModelTripleSet(this->triple_set[model_i]);
     ppf_registration.setDobj(this->d_obj_set[model_i]);
-    ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
+    ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI),
+                                            0.05f);
     ppf_registration.compute();
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(new pcl::PointCloud<pcl::PointXYZ>());
+    pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(
+        new pcl::PointCloud<pcl::PointXYZ>());
     pcl::transformPointCloud(*this->model_set[model_i], *output_model, T);
 
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
@@ -161,7 +163,6 @@ void CentralVoting::Solve() {
     view.addPointCloud(model_set[model_i], s, "model");
     view.addPointCloud(output_model, red, "out");
     view.addPointCloud(this->scene, white, "scene");
-
   }
 
   while (!view.wasStopped()) {

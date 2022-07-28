@@ -203,9 +203,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   std::cout << "after down sample" << output_cloud->points.size() << std::endl;
   return output_cloud;
 }
-void SmartDownSample::setIsdense(const bool &data) {
-  this->isdense = data;
-}
+void SmartDownSample::setIsdense(const bool &data) { this->isdense = data; }
 void SmartDownSample::setRadius(float data) {
   this->normal_estimation_search_radius = data;
 }

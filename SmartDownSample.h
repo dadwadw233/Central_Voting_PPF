@@ -83,6 +83,7 @@ class SmartDownSample {
   float calculateDistance(T &pointA, pcl::PointNormal &pointB);
 
   void setIsdense(const bool &data);
+
  private:
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_cloud;
   std::pair<double, double> x_range;
@@ -91,7 +92,7 @@ class SmartDownSample {
   float step;
   float angleThreshold, distanceThreshold;
   float normal_estimation_search_radius;
-  bool isdense=false;
+  bool isdense = false;
 };
 
 #endif  // CENTRAL_VOTING_SMARTDOWNSAMPLE_H
