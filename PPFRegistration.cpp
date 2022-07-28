@@ -108,12 +108,14 @@ void PPFRegistration::compute() {
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
-    for (auto j = 0; j < scene_cloud_with_normal->points.size() *
-                             (this->scene_reference_point_sampling_rate / 100);
+#pragma omp parallel for shared(x_num,y_num,z_num,zr,xr,yr,i,triple_scene) private(p1,p2,n1,n2,delta,feature,data) default(none) \
+    num_threads(15)
+    for (auto j = 0; j < scene_cloud_with_normal->points.size()/10;
          ++j) {
       if (i == j) {
         continue;
       } else {
+       // triple_scene.reset();
         p1 << scene_cloud_with_normal->points[i].x,
             scene_cloud_with_normal->points[i].y,
             scene_cloud_with_normal->points[i].z, 0.0f;
@@ -259,7 +261,11 @@ void PPFRegistration::compute() {
                             : static_cast<int>(std::ceil(
                                   (s[2] - this->z_range.first) /
                                   clustering_position_diff_threshold));
-            triple_scene->points.emplace_back(s[0], s[1], s[2]);
+            if(i == 0){
+#pragma omp critical
+              triple_scene->points.emplace_back(s[0], s[1], s[2]);
+            }
+
             index_1 +=
                 (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
             pcl::transformPoint(m, s, transform_2);
@@ -284,11 +290,17 @@ void PPFRegistration::compute() {
                         : static_cast<int>(
                               std::ceil((s[2] - this->z_range.first) /
                                         clustering_position_diff_threshold));
-            triple_scene->points.emplace_back(s[0], s[1], s[2]);
+            if(i == 0){
+#pragma omp critical
+              triple_scene->points.emplace_back(s[0], s[1], s[2]);
+            }
+
             index_2 +=
                 (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
           }
+#pragma omp critical
           this->vote(index_1, transform_1);
+#pragma omp critical
           this->vote(index_2, transform_2);
         } else {
           continue;
@@ -297,22 +309,25 @@ void PPFRegistration::compute() {
     }
   }
 
-/*
+#pragma omp barrier
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
       new pcl::search::KdTree<pcl::PointXYZ>());
-  tree->setInputCloud(triple_scene);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr temp(new pcl::PointCloud<pcl::PointXYZ>());
+  std::vector<int>indices;
+  pcl::removeNaNFromPointCloud(*triple_scene,*temp, indices);
+  tree->setInputCloud(temp);
 
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(100);
+  ec.setMinClusterSize(5);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
-  ec.setInputCloud(triple_scene);
+  ec.setInputCloud(temp);
   ec.extract(cluster_indices);
-*/
+
   int final_key = -1;
   int max_vote = 0;
   for(auto i :this->map){
@@ -327,15 +342,22 @@ void PPFRegistration::compute() {
   this->finalTransformation = map.find(final_key)->second.T;
   std::cout<<"transform matrix: "<<std::endl<<this->finalTransformation.matrix();
   /**generate cluster **/
-  /*
+
   for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
     for (auto j = 0; j < i->indices.size(); j++) {
       triple->points.push_back(triple_scene->points[i->indices[j]]);
     }
   }
-*/
+
 /*visualize*/
-/*
+
+  std::cout<<"\ntriple size: "<<triple_scene->size()<<std::endl;
+  /*for(auto i:triple_scene->points){
+    std::cout<<i<<std::endl;
+  }*/
+
+
+
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
@@ -348,5 +370,5 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-*/
+
 }

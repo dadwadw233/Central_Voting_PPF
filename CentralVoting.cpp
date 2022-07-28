@@ -41,18 +41,20 @@ void CentralVoting::CenterExtractor(int index) {
                        minor_vector(2) * 100 + mass_center(2));
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> model_color(
       255, 255, 255);
-
-  pcl::PointXYZ p_faux(center_);
-  pcl::PointXYZ p_saux(center_);
-  std::vector<pcl::PointXYZ> triple;
+  //std::cout<<" center: "<<center<<std::endl;
+  pcl::PointXYZ p_faux(center[0], center[1], center[2]);
+  pcl::PointXYZ p_saux(center[0], center[1], center[2]);
+  pcl::PointXYZ c(center[0], center[1], center[2]);
+  //std::vector<pcl::PointXYZ> triple;
   double d_obj = std::sqrt(std::pow(max_point_AABB.x - min_point_AABB.x, 2) +
                            std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
+  //std::cout<<" d_obj: "<<d_obj<<std::endl;
   this->d_obj_set.push_back(static_cast<float>(d_obj));
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
 
-  this->triple_set[index].push_back(center_);
+  this->triple_set[index].push_back(c);
   this->triple_set[index].push_back(p_faux);
   this->triple_set[index].push_back(p_saux);
 /*
@@ -105,7 +107,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 void CentralVoting::Solve() {
   auto scene_cloud = SimpleDownSample(scene);
   this->scene_subsampled  = DownSample(scene_cloud);
-
+  //pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
@@ -136,7 +138,7 @@ void CentralVoting::Solve() {
   for(std::size_t model_i = 0; model_i < model_set.size(); ++model_i){
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(0.2f);
+    ppf_registration.setPositionClusteringThreshold(0.02);
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
@@ -156,7 +158,7 @@ void CentralVoting::Solve() {
         this->scene, 255, 255, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> s(
         this->model_set[model_i], 0, 255, 0);
-    //view.addPointCloud(model_set[model_i], red, "model");
+    view.addPointCloud(model_set[model_i], s, "model");
     view.addPointCloud(output_model, red, "out");
     view.addPointCloud(this->scene, white, "scene");
 
