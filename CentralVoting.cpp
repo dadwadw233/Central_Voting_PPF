@@ -105,7 +105,12 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 }
 
 void CentralVoting::Solve() {
-  auto scene_cloud = SimpleDownSample(scene);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  if(this->isAdaptiveDownSample){
+    scene_cloud = adaptiveDownSample(scene);
+  }else{
+    scene_cloud = SimpleDownSample(scene);
+  }
   this->scene_subsampled = DownSample(scene_cloud);
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
@@ -172,7 +177,14 @@ void CentralVoting::Solve() {
 }
 
 void CentralVoting::test() {
-  auto model_cloud = SimpleDownSample(model_set[0]);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud =
+      boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  if (isAdaptiveDownSample) {
+    model_cloud = adaptiveDownSample(model_set[0]);
+  } else {
+    model_cloud = SimpleDownSample(model_set[0]);
+  }
+
   pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
       DownSample(model_cloud);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
@@ -248,4 +260,42 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::SimpleDownSample(
   std::cout << "output_cloud_size:" << cloud_subsampled->points.size()
             << std::endl;
   return cloud_subsampled;
+}
+
+pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::adaptiveDownSample(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud) {
+  std::cout << "input_cloud_size:" << input_cloud->points.size() << std::endl;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
+      new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;
+  subsampling_filter.setInputCloud(input_cloud);
+  Eigen::Vector4f leaf_size;
+
+  if(this->adaptive_step!=0){
+    leaf_size<<adaptive_step, adaptive_step, adaptive_step, 0.0f;
+  }else{
+    pcl::PointXYZ min_p, max_p;
+    GenerateBound(input_cloud, max_p, min_p);
+    float max_l = std::abs(static_cast<float>(std::max(
+        max_p.x - min_p.x, std::max(max_p.y - min_p.y, max_p.z - min_p.z))));
+    float s = std::ceil(max_l / pow(this->downSampleTarget, (0.5)));
+    std::cout<<"max_l: "<<max_l<<std::endl;
+    std::cout << "adaptive step: " << s << std::endl;
+    leaf_size << s, s, s, 0.0f;
+  }
+
+  subsampling_filter.setLeafSize(leaf_size);
+  subsampling_filter.filter(*cloud_subsampled);
+  std::cout << "output_cloud_size:" << cloud_subsampled->points.size()
+            << std::endl;
+  return cloud_subsampled;
+}
+
+void CentralVoting::setAdaptiveDownSampleOption(const bool &lhs,
+                                                const int &rhs,const float &step_) {
+  this->isAdaptiveDownSample = lhs;
+  this->downSampleTarget = rhs;
+  if(step_!=0){
+    this->adaptive_step = step_;
+  }
 }

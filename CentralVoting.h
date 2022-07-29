@@ -90,6 +90,10 @@ class CentralVoting {
 
   void setSimpleDownSampleLeaf(const Eigen::Vector4f &subsampling_leaf_size);
 
+  void setAdaptiveDownSampleOption(const bool &lhs, const int &rhs, const float &step_ = 0.0f);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr adaptiveDownSample(const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
+
   CentralVoting &operator=(const CentralVoting &) = delete;
   CentralVoting(const CentralVoting &) = delete;
 
@@ -106,5 +110,8 @@ class CentralVoting {
   float distanceThreshold;
   float normalEstimationRadius;
   std::vector<float> d_obj_set;
+  bool isAdaptiveDownSample = false;
+  int downSampleTarget = 2000;
+  float adaptive_step = 0.0f;
 };
 #endif  // CENTRAL_VOTING_CENTRALVOTING_H

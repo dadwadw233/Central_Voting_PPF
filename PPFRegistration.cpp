@@ -110,9 +110,9 @@ void PPFRegistration::compute() {
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i,                                       \
-    triple_scene) private(p1, p2, n1, n2, delta, feature, data) default(none) \
+    triple_scene,scene_reference_point_sampling_rate) private(p1, p2, n1, n2, delta, feature, data) default(none) \
     num_threads(15)
-    for (auto j = 0; j < scene_cloud_with_normal->points.size() / 10; ++j) {
+    for (auto j = 0; j < scene_cloud_with_normal->points.size()/10; ++j) {
       if (i == j) {
         continue;
       } else {
@@ -324,7 +324,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(5);
+  ec.setMinClusterSize(3);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
