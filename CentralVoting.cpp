@@ -105,20 +105,23 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 }
 
 void CentralVoting::Solve() {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  /*pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   if(this->isAdaptiveDownSample){
     scene_cloud = adaptiveDownSample(scene);
   }else{
     scene_cloud = SimpleDownSample(scene);
   }
-  this->scene_subsampled = DownSample(scene_cloud);
+  this->scene_subsampled = DownSample(scene_cloud);*/
+  this->scene_subsampled = subsampleAndCalculateNormals(scene);
+
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
-    auto model_cloud = SimpleDownSample(model_set[i]);
+    /*auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-        DownSample(model_cloud);
+        DownSample(model_cloud);*/
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = subsampleAndCalculateNormals(model_set[i]);
     cloud_models_with_normal.push_back(model_with_normal);
 
     PCL_INFO("begin to establish ppf\n");
@@ -298,4 +301,35 @@ void CentralVoting::setAdaptiveDownSampleOption(const bool &lhs,
   if(step_!=0){
     this->adaptive_step = step_;
   }
+}
+pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::subsampleAndCalculateNormals(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud)  //降采样并计算表面法向量
+{
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
+      new pcl::PointCloud<pcl::PointXYZ>());  //直接进行降采样，没有进行额外的处理
+  pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;  //创建体素栅格
+  subsampling_filter.setInputCloud(cloud);
+  subsampling_filter.setLeafSize(subsampling_leaf_size);  // 设置采样体素大小
+  subsampling_filter.filter(*cloud_subsampled);
+
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(new pcl::PointCloud<pcl::Normal>());
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
+  normal_estimation_filter.setInputCloud(cloud_subsampled);
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
+      new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
+  normal_estimation_filter.setSearchMethod(search_tree);
+  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.compute(*cloud_subsampled_normals);
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
+      new pcl::PointCloud<pcl::PointNormal>());
+  concatenateFields(
+      *cloud_subsampled, *cloud_subsampled_normals,
+      *cloud_subsampled_with_normals);  // concatenate point cloud and its
+                                        // normal into a new cloud
+
+  PCL_INFO("Cloud dimensions before / after subsampling: %zu / %zu\n",
+           static_cast<std::size_t>(cloud->size()),
+           static_cast<std::size_t>(cloud_subsampled->size()));
+  return cloud_subsampled_with_normals;
 }

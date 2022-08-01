@@ -92,6 +92,9 @@ class CentralVoting {
 
   void setAdaptiveDownSampleOption(const bool &lhs, const int &rhs, const float &step_ = 0.0f);
 
+  pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr adaptiveDownSample(const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
 
   CentralVoting &operator=(const CentralVoting &) = delete;
