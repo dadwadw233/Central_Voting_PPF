@@ -211,7 +211,7 @@ void PPFRegistration::compute() {
           Eigen::Vector3f m_2{model_lrf.t.x, model_lrf.t.y, model_lrf.t.z};
 
           m_1 = R_1 * m_1;
-          m_2 = R_1 * m_2;
+          m_2 = R_2 * m_2;
 
           t_1 << data.second.r.x - m_1[0], data.second.r.y - m_1[1],
               data.second.r.z - m_1[2], 1.0f;

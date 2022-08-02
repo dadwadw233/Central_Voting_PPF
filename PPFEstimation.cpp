@@ -57,7 +57,7 @@ void PPFEstimation::compute(
               input_point_normal->points[j].normal_y,
               input_point_normal->points[j].normal_z, 0.0f;
           // std::cout<<input_point_normal->points[j]<<std::endl;
-          delta = p2 - p1;
+          delta = p2 - p1;//pt-pr
           float f4 = delta.norm();
 
           // normalize
@@ -85,6 +85,7 @@ void PPFEstimation::compute(
           data.second.Or =
               (std::make_pair(n1.cross3(delta),
                               std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
+
           data.second.Ot =
               (std::make_pair(n2.cross3(delta),
                               std::make_pair(n2.cross3(n2.cross3(delta)), n2)));
