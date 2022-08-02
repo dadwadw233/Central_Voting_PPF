@@ -85,30 +85,28 @@ void PPFRegistration::establishVoxelGrid() {
 decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
   pcl::PointCloud<pcl::PointNormal>::Ptr temp =
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-  pcl::PointCloud<pcl::PointNormal>::Ptr search_cloud =
-      boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
   pcl::transformPointCloud(*this->model_cloud_with_normal, *temp, T);
   pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree(
       new pcl::search::KdTree<pcl::PointNormal>());
-  *search_cloud = *temp + *this->scene_cloud_with_normal;
   auto cnt = 0;
   double radius = 0.02 * this->d_obj;
-  kdtree->setInputCloud(search_cloud);
-//#pragma omp parallel for shared(temp, radius, cnt,search_cloud, kdtree) default(none) num_threads(15)
-  for (auto i = temp->points.begin();i!=temp->points.end();i++) {
+  kdtree->setInputCloud(this->scene_cloud_with_normal);
+  //#pragma omp parallel for shared(temp, radius, cnt,search_cloud, kdtree)
+  //default(none) num_threads(15)
+  for (auto i = temp->points.begin(); i != temp->points.end(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
-//#pragma omp critical
+    //#pragma omp critical
     kdtree->radiusSearch(*i, radius, indices, distance);
     if (!indices.empty()) {
-//#pragma omp critical
-      cnt--;
+      //#pragma omp critical
+      cnt +=0 ;
       continue;
     } else {
       int num = 0;
       for (auto j = 0; j < indices.size(); ++j) {
         if (pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
-                                search_cloud->points[indices[j]].normal),
+                                scene_cloud_with_normal->points[indices[j]].normal),
                             static_cast<const Eigen::Vector3f>(i->normal),
                             true) >= 25) {
           num++;
@@ -118,19 +116,69 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
         }
       }
       if (num > 0) {
-//#pragma omp critical
+        //#pragma omp critical
         cnt++;
       } else {
-//#pragma omp critical
-        cnt--;
+        //#pragma omp critical
+        cnt +=0 ;
       }
     }
   }
 
-#pragma omp barrier
+  //#pragma omp barrier
   return cnt;
 }
+decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
+  pcl::PointCloud<pcl::PointNormal>::Ptr temp =
+      boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+  pcl::transformPointCloud(*this->model_cloud_with_normal, *temp, T);
+  pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree(
+      new pcl::search::KdTree<pcl::PointNormal>());
+  auto cnt = 0;
+  double radius = 0.02 * this->d_obj;
+  kdtree->setInputCloud(this->scene_cloud_with_normal);
+  std::vector<int>nan;
+  pcl::PointCloud<pcl::PointNormal>::Ptr temp_ =
+      boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+  temp_->is_dense = false;
+  pcl::removeNaNFromPointCloud(*temp, *temp_, nan);
+  #pragma omp parallel for shared(temp, radius, cnt, kdtree, temp_) default(none) num_threads(15)
+  for (auto i = 0; i < temp_->points.size(); i++) {
+    std::vector<int> indices;
+    std::vector<float> distance;
+    #pragma omp critical
+    kdtree->radiusSearch(temp_->points[i], radius, indices, distance);
+    if (indices.empty()) {
+      #pragma omp critical
+      cnt += 0;
+      continue;
+    } else {
+      int num = 0;
+      for (auto j = 0; j < indices.size(); ++j) {
+        if (pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
+                                scene_cloud_with_normal->points[indices[j]].normal),
+                            static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
+                            true) < 25) {
 
+          num++;
+          break;
+        } else {
+          continue;
+        }
+      }
+      if (num > 0) {
+        #pragma omp critical
+        cnt++;
+      } else {
+        #pragma omp critical
+        cnt += 0;
+      }
+    }
+  }
+
+  #pragma omp barrier
+  return cnt;
+}
 void PPFRegistration::compute() {
   // pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene =
   // boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -291,6 +339,9 @@ void PPFRegistration::compute() {
             m << triple_set[i].x, triple_set[i].y, triple_set[i].z;
             s << 0.0f, 0.0f, 0.0f;
             pcl::transformPoint(m, s, transform_1);
+            if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
+              break;
+            }
             int xCell = static_cast<int>(
                             std::ceil((s[0] - this->x_range.first) /
                                       clustering_position_diff_threshold)) == 0
@@ -320,6 +371,9 @@ void PPFRegistration::compute() {
             index_1.push_back((xCell - 1) + (yCell - 1) * x_num +
                               (zCell - 1) * x_num * y_num);
             pcl::transformPoint(m, s, transform_2);
+            if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
+              break;
+            }
             xCell = static_cast<int>(
                         std::ceil((s[0] - this->x_range.first) /
                                   clustering_position_diff_threshold)) == 0
@@ -386,19 +440,32 @@ void PPFRegistration::compute() {
 */
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
-  for (const auto &i : this->map_) {
-    //auto cnt = HypoVerification(i.second.T_set)
-    if (i.second.value > max_vote) {
-      max_vote = i.second.value;
-      final_key = i.first;
-    } else {
-      continue;
+  if(this->map_.empty()){
+    std::cout<<"no ans"<<std::endl;
+  }else{
+    for (const auto &i : this->map_) {
+      auto T_mean = getMeanMatrix(i.second.T_set);
+
+      auto cnt = HypoVerification(T_mean);
+
+      Eigen::Affine3f temp(T_mean);
+      //std::cout<<temp.matrix()<<std::endl;
+      struct data node(temp, cnt + i.second.value);
+      T_queue.push(node);
+      if (i.second.value > max_vote) {
+        max_vote = i.second.value;
+        final_key = i.first;
+      } else {
+        continue;
+      }
     }
+    std::cout << "final vote: " << max_vote << std::endl;
+    std::cout << "max value: " << T_queue.top().value << std::endl;
+    this->finalTransformation = T_queue.top().T;
+    std::cout << "transform matrix: " << std::endl
+              << this->finalTransformation.matrix();
   }
-  std::cout << "final vote: " << max_vote << std::endl;
-  this->finalTransformation =  getMeanMatrix(map_.find(final_key)->second.T_set);
-  std::cout << "transform matrix: " << std::endl
-            << this->finalTransformation.matrix();
+
   /**generate cluster **/
   /*
     for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {

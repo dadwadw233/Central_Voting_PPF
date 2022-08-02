@@ -87,6 +87,7 @@ class PPFRegistration {
 
   decltype(auto) HypoVerification(const Eigen::Affine3f &T);
 
+  decltype(auto) HypoVerification(const Eigen::Matrix4f &T);
 
   decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set){
     Eigen::Matrix4f temp;
