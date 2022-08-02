@@ -60,12 +60,14 @@ void PPFRegistration::setModelTripleSet(
   }
 }
 void PPFRegistration::setDobj(const float &data) { this->d_obj = data; }
-void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
-  if (map.find(key) != map.end()) {
-    (map.find(key)->second).value += 1;
-  } else {
-    struct data d(T, 1);
-    map.emplace(key, d);
+
+void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
+  if(map_.find(key) != map_.end()){
+    (map_.find(key)->second).value += 1;
+    (map_.find(key)->second).T_set.push_back(T);
+  }else{
+    data_ d(T, 1);
+    map_.emplace(key, d);
   }
 }
 
@@ -109,10 +111,11 @@ void PPFRegistration::compute() {
       new pcl::PointCloud<pcl::PointXYZ>());
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
-    x_num, y_num, z_num, zr, xr, yr, i,                                       \
-    triple_scene,scene_reference_point_sampling_rate) private(p1, p2, n1, n2, delta, feature, data) default(none) \
+    x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
+    scene_reference_point_sampling_rate) private(p1, p2, n1, n2, delta,       \
+                                                 feature, data) default(none) \
     num_threads(15)
-    for (auto j = 0; j < scene_cloud_with_normal->points.size()/10; ++j) {
+    for (auto j = 0; j < scene_cloud_with_normal->points.size() / 10; ++j) {
       if (i == j) {
         continue;
       } else {
@@ -232,9 +235,7 @@ void PPFRegistration::compute() {
           pcl::PointXYZ p;
           Eigen::Affine3f transform_1(T_1);
           Eigen::Affine3f transform_2(T_2);
-          int index_1, index_2;
-          index_1 = 0;
-          index_2 = 0;
+          std::vector<int> index_1, index_2;
           for (int i = 0; i < 3; i++) {
             Eigen::Vector3f m{};
             Eigen::Vector3f s{};
@@ -267,8 +268,8 @@ void PPFRegistration::compute() {
               triple_scene->points.emplace_back(s[0], s[1], s[2]);
             }
 
-            index_1 +=
-                (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
+            index_1.push_back((xCell - 1) + (yCell - 1) * x_num +
+                              (zCell - 1) * x_num * y_num);
             pcl::transformPoint(m, s, transform_2);
             xCell = static_cast<int>(
                         std::ceil((s[0] - this->x_range.first) /
@@ -296,13 +297,16 @@ void PPFRegistration::compute() {
               triple_scene->points.emplace_back(s[0], s[1], s[2]);
             }
 
-            index_2 +=
-                (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
+            index_2.push_back((xCell - 1) + (yCell - 1) * x_num +
+                              (zCell - 1) * x_num * y_num);
           }
+
+          key_ key_1(index_1[0], index_1[1], index_1[2]);
+          key_ key_2(index_2[0], index_2[1], index_2[2]);
 #pragma omp critical
-          this->vote(index_1, transform_1);
+          this->vote(key_1, transform_1);
 #pragma omp critical
-          this->vote(index_2, transform_2);
+          this->vote(key_2, transform_2);
         } else {
           continue;
         }
@@ -331,9 +335,9 @@ void PPFRegistration::compute() {
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
 */
-  int final_key = -1;
+  key_ final_key(-1, -1, -1);
   int max_vote = 0;
-  for (auto i : this->map) {
+  for (const auto& i : this->map_) {
     if (i.second.value > max_vote) {
       max_vote = i.second.value;
       final_key = i.first;
@@ -342,17 +346,26 @@ void PPFRegistration::compute() {
     }
   }
   std::cout << "final vote: " << max_vote << std::endl;
-  this->finalTransformation = map.find(final_key)->second.T;
+
+  Eigen::Matrix4f temp;
+  temp<<0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0;
+  for(auto i:map_.find(final_key)->second.T_set){
+    temp += i.matrix();
+  }
+  this->finalTransformation = temp/max_vote;
   std::cout << "transform matrix: " << std::endl
             << this->finalTransformation.matrix();
   /**generate cluster **/
-/*
-  for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
-    for (auto j = 0; j < i->indices.size(); j++) {
-      triple->points.push_back(triple_scene->points[i->indices[j]]);
+  /*
+    for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
+      for (auto j = 0; j < i->indices.size(); j++) {
+        triple->points.push_back(triple_scene->points[i->indices[j]]);
+      }
     }
-  }
-*/
+  */
   /*visualize*/
 
   std::cout << "\ntriple size: " << triple_scene->size() << std::endl;

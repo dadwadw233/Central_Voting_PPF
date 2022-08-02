@@ -43,7 +43,6 @@ class PPFRegistration {
 
   void setModelTripleSet(const std::vector<pcl::PointXYZ> &triple_set);
 
-  void vote(const int &key, const Eigen::Affine3f &T);
 
   void establishVoxelGrid();
 
@@ -51,14 +50,29 @@ class PPFRegistration {
   PPFRegistration(const PPFRegistration &) = delete;
 
  private:
-  struct data {
-    Eigen::Affine3f T;
-    int value;
-    data(const Eigen::Affine3f &T_, const int value_) {
-      T = T_;
-      value = value_;
+  struct data_ {
+    std::vector<Eigen::Affine3f> T_set;
+    int value = 0;
+    data_(const Eigen::Affine3f &T_, const int value_) {
+      T_set.push_back(T_);
+      value += value_;
     }
   };
+  struct key_ {
+    int index_c;
+    int index_aux_1;
+    int index_aux_2;
+    key_(int center, int first_aux, int second_aux){
+      index_c = center;
+      index_aux_1 = first_aux;
+      index_aux_2 = second_aux;
+    }
+    bool operator==(const key_ &k) const {
+      return index_c == k.index_c && index_aux_1 == k.index_aux_1 &&
+             index_aux_2 == k.index_aux_2;
+    }
+  };
+  void vote(const key_ &key, const Eigen::Affine3f &T);
   float scene_reference_point_sampling_rate{};
   float clustering_position_diff_threshold{};
   float clustering_rotation_diff_threshold{};
@@ -73,7 +87,18 @@ class PPFRegistration {
   float angle_discretization_step;
   float distance_discretization_step;
   float d_obj;
-  std::unordered_map<int, struct data> map;
+  struct hash_cal {
+    size_t operator()(const key_ &k) const {
+      return std::hash<int>()(k.index_c) ^
+             (std::hash<int>()(k.index_aux_1) << 1) ^
+             (std::hash<int>()(k.index_aux_2) << 2) ^
+             (std::hash<int>()(k.index_c) << 3) ^
+             (std::hash<int>()(k.index_aux_1) << 4) ^
+             (std::hash<int>()(k.index_aux_2) << 5);
+      // return std::hash<int>()(k.k1);
+    }
+  };
+  std::unordered_map<key_, data_, hash_cal> map_;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H
