@@ -339,9 +339,9 @@ void PPFRegistration::compute() {
             m << triple_set[i].x, triple_set[i].y, triple_set[i].z;
             s << 0.0f, 0.0f, 0.0f;
             pcl::transformPoint(m, s, transform_1);
-            if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
+            /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
               break;
-            }
+            }*/
             int xCell = static_cast<int>(
                             std::ceil((s[0] - this->x_range.first) /
                                       clustering_position_diff_threshold)) == 0
@@ -371,9 +371,9 @@ void PPFRegistration::compute() {
             index_1.push_back((xCell - 1) + (yCell - 1) * x_num +
                               (zCell - 1) * x_num * y_num);
             pcl::transformPoint(m, s, transform_2);
-            if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
+            /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
               break;
-            }
+            }*/
             xCell = static_cast<int>(
                         std::ceil((s[0] - this->x_range.first) /
                                   clustering_position_diff_threshold)) == 0
@@ -460,6 +460,7 @@ void PPFRegistration::compute() {
       }
     }
     std::cout << "final vote: " << max_vote << std::endl;
+    T_queue.pop();
     std::cout << "max value: " << T_queue.top().value << std::endl;
     this->finalTransformation = T_queue.top().T;
     std::cout << "transform matrix: " << std::endl
