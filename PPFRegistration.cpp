@@ -62,10 +62,10 @@ void PPFRegistration::setModelTripleSet(
 void PPFRegistration::setDobj(const float &data) { this->d_obj = data; }
 
 void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
-  if(map_.find(key) != map_.end()){
+  if (map_.find(key) != map_.end()) {
     (map_.find(key)->second).value += 1;
     (map_.find(key)->second).T_set.push_back(T);
-  }else{
+  } else {
     data_ d(T, 1);
     map_.emplace(key, d);
   }
@@ -80,6 +80,55 @@ void PPFRegistration::establishVoxelGrid() {
   this->x_range = std::make_pair(min_point.x, max_point.x);
   this->y_range = std::make_pair(min_point.y, max_point.y);
   this->z_range = std::make_pair(min_point.z, max_point.z);
+}
+
+decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
+  pcl::PointCloud<pcl::PointNormal>::Ptr temp =
+      boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+  pcl::PointCloud<pcl::PointNormal>::Ptr search_cloud =
+      boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+  pcl::transformPointCloud(*this->model_cloud_with_normal, *temp, T);
+  pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree(
+      new pcl::search::KdTree<pcl::PointNormal>());
+  *search_cloud = *temp + *this->scene_cloud_with_normal;
+  auto cnt = 0;
+  double radius = 0.02 * this->d_obj;
+  kdtree->setInputCloud(search_cloud);
+//#pragma omp parallel for shared(temp, radius, cnt,search_cloud, kdtree) default(none) num_threads(15)
+  for (auto i = temp->points.begin();i!=temp->points.end();i++) {
+    std::vector<int> indices;
+    std::vector<float> distance;
+//#pragma omp critical
+    kdtree->radiusSearch(*i, radius, indices, distance);
+    if (!indices.empty()) {
+//#pragma omp critical
+      cnt--;
+      continue;
+    } else {
+      int num = 0;
+      for (auto j = 0; j < indices.size(); ++j) {
+        if (pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
+                                search_cloud->points[indices[j]].normal),
+                            static_cast<const Eigen::Vector3f>(i->normal),
+                            true) >= 25) {
+          num++;
+          break;
+        } else {
+          continue;
+        }
+      }
+      if (num > 0) {
+//#pragma omp critical
+        cnt++;
+      } else {
+//#pragma omp critical
+        cnt--;
+      }
+    }
+  }
+
+#pragma omp barrier
+  return cnt;
 }
 
 void PPFRegistration::compute() {
@@ -337,7 +386,8 @@ void PPFRegistration::compute() {
 */
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
-  for (const auto& i : this->map_) {
+  for (const auto &i : this->map_) {
+    //auto cnt = HypoVerification(i.second.T_set)
     if (i.second.value > max_vote) {
       max_vote = i.second.value;
       final_key = i.first;
@@ -346,16 +396,7 @@ void PPFRegistration::compute() {
     }
   }
   std::cout << "final vote: " << max_vote << std::endl;
-
-  Eigen::Matrix4f temp;
-  temp<<0,0,0,0,
-        0,0,0,0,
-        0,0,0,0,
-        0,0,0,0;
-  for(auto i:map_.find(final_key)->second.T_set){
-    temp += i.matrix();
-  }
-  this->finalTransformation = temp/max_vote;
+  this->finalTransformation =  getMeanMatrix(map_.find(final_key)->second.T_set);
   std::cout << "transform matrix: " << std::endl
             << this->finalTransformation.matrix();
   /**generate cluster **/

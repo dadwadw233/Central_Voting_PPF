@@ -146,7 +146,7 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(0.02);
+    ppf_registration.setPositionClusteringThreshold(1);
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);

@@ -72,7 +72,34 @@ class PPFRegistration {
              index_aux_2 == k.index_aux_2;
     }
   };
+  struct data{
+    Eigen::Affine3f T;
+    int value;
+    data(const Eigen::Affine3f &T_, const int &value_):T(T_), value(value_){}
+  };
+  struct cmp{
+    bool operator()(data a, data b){
+      if(a.value == b.value) return a.value<=b.value;
+      else return a.value<b.value;
+    }
+  };
   void vote(const key_ &key, const Eigen::Affine3f &T);
+
+  decltype(auto) HypoVerification(const Eigen::Affine3f &T);
+
+
+  decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set){
+    Eigen::Matrix4f temp;
+    temp<<0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0;
+    for(auto i:T_set){
+      temp+=i.matrix();
+    }
+    temp/=T_set.size();
+    return temp;
+  }
   float scene_reference_point_sampling_rate{};
   float clustering_position_diff_threshold{};
   float clustering_rotation_diff_threshold{};
@@ -99,6 +126,7 @@ class PPFRegistration {
     }
   };
   std::unordered_map<key_, data_, hash_cal> map_;
+  std::priority_queue<data, std::vector<data>, cmp>T_queue;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H
