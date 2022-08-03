@@ -445,7 +445,10 @@ void PPFRegistration::compute() {
   }else{
     for (const auto &i : this->map_) {
       auto T_mean = getMeanMatrix(i.second.T_set);
-
+      //auto T_mean = i.second.T_set[0].matrix();
+      if(isnan(T_mean(0,0))){
+        continue;
+      }
       auto cnt = HypoVerification(T_mean);
 
       Eigen::Affine3f temp(T_mean);
@@ -460,7 +463,9 @@ void PPFRegistration::compute() {
       }
     }
     std::cout << "final vote: " << max_vote << std::endl;
-    T_queue.pop();
+    while(isnan(T_queue.top().T(0,0))){
+      T_queue.pop();
+    }
     std::cout << "max value: " << T_queue.top().value << std::endl;
     this->finalTransformation = T_queue.top().T;
     std::cout << "transform matrix: " << std::endl
@@ -478,6 +483,7 @@ void PPFRegistration::compute() {
   /*visualize*/
 
   std::cout << "\ntriple size: " << triple_scene->size() << std::endl;
+  std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
   /*for(auto i:triple_scene->points){
     std::cout<<i<<std::endl;
   }*/
@@ -488,10 +494,27 @@ void PPFRegistration::compute() {
       triple_scene, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
-  view.addPointCloud(triple_scene, red, "triple");
+  //view.addPointCloud(triple_scene, red, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
+  /*int cnt = 0;
+  std::string s = "0";
+
+  while(cnt!=10){
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+    pcl::transformPointCloud(*this->model_cloud_with_normal, *cloud, T_queue.top().T);
+    T_queue.pop();
+    cnt++;
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
+                cloud, 255, 0, 0
+                );
+
+    view.addPointCloud(cloud, red, s);
+    s+="1";
+  }*/
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
+
+
 }

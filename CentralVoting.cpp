@@ -168,7 +168,7 @@ void CentralVoting::Solve() {
         this->scene, 255, 255, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> s(
         this->model_set[model_i], 0, 255, 0);
-    view.addPointCloud(model_set[model_i], s, "model");
+    //view.addPointCloud(model_set[model_i], s, "model");
     view.addPointCloud(output_model, red, "out");
     view.addPointCloud(this->scene, white, "scene");
   }
