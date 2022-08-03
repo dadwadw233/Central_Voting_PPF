@@ -51,6 +51,7 @@ void CentralVoting::CenterExtractor(int index) {
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
   // std::cout<<" d_obj: "<<d_obj<<std::endl;
   this->d_obj_set.push_back(static_cast<float>(d_obj));
+  std::cout<<"\nd_obj: "<<d_obj<<std::endl;
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
 

@@ -235,6 +235,10 @@ void PPFRegistration::compute() {
         if (f4 > d_obj) {
           continue;
         }
+        if(f4<250)
+        {
+          continue;
+        }
         // normalize
         delta /= f4;
 
@@ -311,7 +315,7 @@ void PPFRegistration::compute() {
           Eigen::Vector3f m_2{model_lrf.t.x, model_lrf.t.y, model_lrf.t.z};
 
           m_1 = R_1 * m_1;
-          m_2 = R_2 * m_2;
+          m_2 = R_1 * m_2;
 
           t_1 << data.second.r.x - m_1[0], data.second.r.y - m_1[1],
               data.second.r.z - m_1[2], 1.0f;
@@ -484,9 +488,6 @@ void PPFRegistration::compute() {
 
   std::cout << "\ntriple size: " << triple_scene->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
-  /*for(auto i:triple_scene->points){
-    std::cout<<i<<std::endl;
-  }*/
 
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
@@ -494,23 +495,9 @@ void PPFRegistration::compute() {
       triple_scene, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
-  //view.addPointCloud(triple_scene, red, "triple");
+  view.addPointCloud(triple_scene, red, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
-  /*int cnt = 0;
-  std::string s = "0";
 
-  while(cnt!=10){
-    pcl::PointCloud<pcl::PointNormal>::Ptr cloud = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-    pcl::transformPointCloud(*this->model_cloud_with_normal, *cloud, T_queue.top().T);
-    T_queue.pop();
-    cnt++;
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
-                cloud, 255, 0, 0
-                );
-
-    view.addPointCloud(cloud, red, s);
-    s+="1";
-  }*/
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
