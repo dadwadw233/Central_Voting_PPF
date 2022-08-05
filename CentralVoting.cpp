@@ -51,7 +51,7 @@ void CentralVoting::CenterExtractor(int index) {
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
   // std::cout<<" d_obj: "<<d_obj<<std::endl;
   this->d_obj_set.push_back(static_cast<float>(d_obj));
-  std::cout<<"\nd_obj: "<<d_obj<<std::endl;
+  std::cout << "\nd_obj: " << d_obj << std::endl;
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
 
@@ -106,15 +106,18 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 }
 
 void CentralVoting::Solve() {
-  /*pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  /*pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud =
+  boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   if(this->isAdaptiveDownSample){
     scene_cloud = adaptiveDownSample(scene);
   }else{
     scene_cloud = SimpleDownSample(scene);
   }
   this->scene_subsampled = DownSample(scene_cloud);*/
-  this->scene_subsampled = subsampleAndCalculateNormals(scene);
-
+  //this->scene_subsampled = subsampleAndCalculateNormals(scene);
+  Eigen::Vector4f center;
+  pcl::compute3DCentroid(*scene, center);
+  this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0], center[1], center[2], true);
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
@@ -122,7 +125,10 @@ void CentralVoting::Solve() {
     /*auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
         DownSample(model_cloud);*/
-    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = subsampleAndCalculateNormals(model_set[i]);
+    // pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+    // subsampleAndCalculateNormals(model_set[i]);
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+        subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
     cloud_models_with_normal.push_back(model_with_normal);
 
     PCL_INFO("begin to establish ppf\n");
@@ -169,7 +175,7 @@ void CentralVoting::Solve() {
         this->scene, 255, 255, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> s(
         this->model_set[model_i], 0, 255, 0);
-    //view.addPointCloud(model_set[model_i], s, "model");
+    // view.addPointCloud(model_set[model_i], s, "model");
     view.addPointCloud(output_model, red, "out");
     view.addPointCloud(this->scene, white, "scene");
   }
@@ -275,15 +281,15 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::adaptiveDownSample(
   subsampling_filter.setInputCloud(input_cloud);
   Eigen::Vector4f leaf_size;
 
-  if(this->adaptive_step!=0){
-    leaf_size<<adaptive_step, adaptive_step, adaptive_step, 0.0f;
-  }else{
+  if (this->adaptive_step != 0) {
+    leaf_size << adaptive_step, adaptive_step, adaptive_step, 0.0f;
+  } else {
     pcl::PointXYZ min_p, max_p;
     GenerateBound(input_cloud, max_p, min_p);
     float max_l = std::abs(static_cast<float>(std::max(
         max_p.x - min_p.x, std::max(max_p.y - min_p.y, max_p.z - min_p.z))));
     float s = std::ceil(max_l / pow(this->downSampleTarget, (0.5)));
-    std::cout<<"max_l: "<<max_l<<std::endl;
+    std::cout << "max_l: " << max_l << std::endl;
     std::cout << "adaptive step: " << s << std::endl;
     leaf_size << s, s, s, 0.0f;
   }
@@ -295,25 +301,28 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CentralVoting::adaptiveDownSample(
   return cloud_subsampled;
 }
 
-void CentralVoting::setAdaptiveDownSampleOption(const bool &lhs,
-                                                const int &rhs,const float &step_) {
+void CentralVoting::setAdaptiveDownSampleOption(const bool &lhs, const int &rhs,
+                                                const float &step_) {
   this->isAdaptiveDownSample = lhs;
   this->downSampleTarget = rhs;
-  if(step_!=0){
+  if (step_ != 0) {
     this->adaptive_step = step_;
   }
 }
-pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::subsampleAndCalculateNormals(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud)  //降采样并计算表面法向量
+pcl::PointCloud<pcl::PointNormal>::Ptr
+CentralVoting::subsampleAndCalculateNormals(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)  //降采样并计算表面法向量
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
-      new pcl::PointCloud<pcl::PointXYZ>());  //直接进行降采样，没有进行额外的处理
+      new pcl::PointCloud<
+          pcl::PointXYZ>());  //直接进行降采样，没有进行额外的处理
   pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;  //创建体素栅格
   subsampling_filter.setInputCloud(cloud);
   subsampling_filter.setLeafSize(subsampling_leaf_size);  // 设置采样体素大小
   subsampling_filter.filter(*cloud_subsampled);
 
-  pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(new pcl::PointCloud<pcl::Normal>());
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(
+      new pcl::PointCloud<pcl::Normal>());
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
   normal_estimation_filter.setInputCloud(cloud_subsampled);
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
@@ -322,6 +331,99 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::subsampleAndCalculateNorma
   normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
 
+  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
+      new pcl::PointCloud<pcl::PointNormal>());
+  concatenateFields(
+      *cloud_subsampled, *cloud_subsampled_normals,
+      *cloud_subsampled_with_normals);  // concatenate point cloud and its
+                                        // normal into a new cloud
+
+  PCL_INFO("Cloud dimensions before / after subsampling: %zu / %zu\n",
+           static_cast<std::size_t>(cloud->size()),
+           static_cast<std::size_t>(cloud_subsampled->size()));
+  return cloud_subsampled_with_normals;
+}
+
+pcl::PointCloud<pcl::PointNormal>::Ptr
+CentralVoting::subsampleAndCalculateNormals(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
+    const std::vector<pcl::PointXYZ> &view_point, const bool &reverse) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
+      new pcl::PointCloud<
+          pcl::PointXYZ>());  //直接进行降采样，没有进行额外的处理
+  pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;  //创建体素栅格
+  subsampling_filter.setInputCloud(cloud);
+  subsampling_filter.setLeafSize(subsampling_leaf_size);  // 设置采样体素大小
+  subsampling_filter.filter(*cloud_subsampled);
+
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(
+      new pcl::PointCloud<pcl::Normal>());
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
+  normal_estimation_filter.setViewPoint(view_point[0].x, view_point[0].y,
+                                        view_point[0].z);
+  normal_estimation_filter.setInputCloud(cloud_subsampled);
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
+      new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
+  normal_estimation_filter.setSearchMethod(search_tree);
+  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.compute(*cloud_subsampled_normals);
+  if (reverse) {
+    for (auto i : *cloud_subsampled_normals) {
+      i.normal_x = -i.normal_x;
+      i.normal_y = -i.normal_y;
+      i.normal_z = -i.normal_z;
+      i.normal[0] = i.normal_x;
+      i.normal[1] = i.normal_y;
+      i.normal[2] = i.normal_z;
+      i.curvature = -i.curvature;
+    }
+  }
+  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
+      new pcl::PointCloud<pcl::PointNormal>());
+  concatenateFields(
+      *cloud_subsampled, *cloud_subsampled_normals,
+      *cloud_subsampled_with_normals);  // concatenate point cloud and its
+                                        // normal into a new cloud
+
+  PCL_INFO("Cloud dimensions before / after subsampling: %zu / %zu\n",
+           static_cast<std::size_t>(cloud->size()),
+           static_cast<std::size_t>(cloud_subsampled->size()));
+  return cloud_subsampled_with_normals;
+}
+
+pcl::PointCloud<pcl::PointNormal>::Ptr
+CentralVoting::subsampleAndCalculateNormals(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, const float x,
+    const float y, const float z, const bool &reverse) {
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
+      new pcl::PointCloud<
+          pcl::PointXYZ>());  //直接进行降采样，没有进行额外的处理
+  pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;  //创建体素栅格
+  subsampling_filter.setInputCloud(cloud);
+  subsampling_filter.setLeafSize(subsampling_leaf_size);  // 设置采样体素大小
+  subsampling_filter.filter(*cloud_subsampled);
+
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(
+      new pcl::PointCloud<pcl::Normal>());
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
+  normal_estimation_filter.setViewPoint(x, y, z);
+  normal_estimation_filter.setInputCloud(cloud_subsampled);
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
+      new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
+  normal_estimation_filter.setSearchMethod(search_tree);
+  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.compute(*cloud_subsampled_normals);
+  if (reverse) {
+    for (auto i : *cloud_subsampled_normals) {
+      i.normal_x = -i.normal_x;
+      i.normal_y = -i.normal_y;
+      i.normal_z = -i.normal_z;
+      i.normal[0] = i.normal_x;
+      i.normal[1] = i.normal_y;
+      i.normal[2] = i.normal_z;
+      i.curvature = -i.curvature;
+    }
+  }
   pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
       new pcl::PointCloud<pcl::PointNormal>());
   concatenateFields(

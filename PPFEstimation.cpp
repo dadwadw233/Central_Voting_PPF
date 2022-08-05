@@ -59,10 +59,11 @@ void PPFEstimation::compute(
           // std::cout<<input_point_normal->points[j]<<std::endl;
           delta = p2 - p1;//pt-pr
           float f4 = delta.norm();
+          /*
           if(f4<250)
           {
             continue;
-          }
+          }*/
           //std::cout<<f4<<std::endl;
           // normalize
           delta /= f4;
