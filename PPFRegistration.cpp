@@ -234,7 +234,8 @@ void PPFRegistration::compute() {
         float f4 = delta.norm();
         if (f4 > d_obj) {
           continue;
-        }/*
+        }
+        /*
         if(f4<250)
         {
           continue;

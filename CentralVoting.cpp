@@ -117,8 +117,9 @@ void CentralVoting::Solve() {
   //this->scene_subsampled = subsampleAndCalculateNormals(scene);
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*scene, center);
-  this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0], center[1], center[2], true);
+  this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200, center[1], center[2], false);
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
+  std::cout<<center<<std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
