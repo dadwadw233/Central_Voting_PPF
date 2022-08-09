@@ -24,10 +24,10 @@ int main(int argc, char** argv) {
   std::cout << argv[1] << " " << argv[2] << std::endl;
   CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
-  handle.setNormalEstimationRadius(10.0f);
+  handle.setNormalEstimationRadius(0.02f);
   handle.setDownSampleStep(10.0f);
   handle.setAngleThreshold(20);
-  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(15.0f, 15.0f, 15.0f, 0.0f));
+  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(0.02f, 0.02f, 0.02f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000,4.0f);
   // handle.test();
   handle.Solve();
