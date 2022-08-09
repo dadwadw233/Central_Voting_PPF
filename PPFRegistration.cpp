@@ -198,11 +198,11 @@ void PPFRegistration::compute() {
       std::ceil(zr / this->clustering_position_diff_threshold));
   pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
-  Eigen::Vector4f p1{};
-  Eigen::Vector4f p2{};
-  Eigen::Vector4f n1{};
-  Eigen::Vector4f n2{};
-  Eigen::Vector4f delta{};
+  Eigen::Vector3f p1{};
+  Eigen::Vector3f p2{};
+  Eigen::Vector3f n1{};
+  Eigen::Vector3f n2{};
+  Eigen::Vector3f delta{};
   auto tp1 = boost::chrono::steady_clock::now();
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
@@ -219,16 +219,16 @@ void PPFRegistration::compute() {
         // triple_scene.reset();
         p1 << scene_cloud_with_normal->points[i].x,
             scene_cloud_with_normal->points[i].y,
-            scene_cloud_with_normal->points[i].z, 0.0f;
+            scene_cloud_with_normal->points[i].z;
         p2 << scene_cloud_with_normal->points[j].x,
             scene_cloud_with_normal->points[j].y,
-            scene_cloud_with_normal->points[j].z, 0.0f;
+            scene_cloud_with_normal->points[j].z;
         n1 << scene_cloud_with_normal->points[i].normal_x,
             scene_cloud_with_normal->points[i].normal_y,
-            scene_cloud_with_normal->points[i].normal_z, 0.0f;
+            scene_cloud_with_normal->points[i].normal_z;
         n2 << scene_cloud_with_normal->points[j].normal_x,
             scene_cloud_with_normal->points[j].normal_y,
-            scene_cloud_with_normal->points[j].normal_z, 0.0f;
+            scene_cloud_with_normal->points[j].normal_z;
 
         delta = p2 - p1;
         float f4 = delta.norm();
@@ -262,10 +262,13 @@ void PPFRegistration::compute() {
         feature.f3 = f3;
         feature.f4 = f4;
         feature.alpha_m = 0.0f;
-        data.second.Or = (std::make_pair(
-            n1.cross3(delta), std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
-        data.second.Ot = (std::make_pair(
-            n2.cross3(delta), std::make_pair(n2.cross3(n2.cross3(delta)), n2)));
+        data.second.Or =
+            (std::make_pair(n1.cross(delta)/(n1.cross(delta)).norm(),
+                            std::make_pair(n1.cross(n1.cross(delta))/(n1.cross(n1.cross(delta))).norm(), n1/n1.norm())));
+
+        data.second.Ot =
+            (std::make_pair(n2.cross(delta)/(n2.cross(delta)).norm(),
+                            std::make_pair(n2.cross(n2.cross(delta))/(n2.cross(n2.cross(delta))).norm(), n2/n2.norm())));
 
         data.first.k1 =
             static_cast<int>(std::floor(f1 / angle_discretization_step));

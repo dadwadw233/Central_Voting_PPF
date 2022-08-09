@@ -16,11 +16,11 @@ void PPFEstimation::compute(
   std::pair<Hash::HashKey, Hash::HashData> data{};
   // Hash::HashData data;
   // Hash::HashKey key;
-  Eigen::Vector4f p1{};
-  Eigen::Vector4f p2{};
-  Eigen::Vector4f n1{};
-  Eigen::Vector4f n2{};
-  Eigen::Vector4f delta{};
+  Eigen::Vector3f p1{};
+  Eigen::Vector3f p2{};
+  Eigen::Vector3f n1{};
+  Eigen::Vector3f n2{};
+  Eigen::Vector3f delta{};
 
   auto tp1 = std::chrono::steady_clock::now();
 
@@ -45,17 +45,15 @@ void PPFEstimation::compute(
           Eigen::Vector4f n2(input_point_normal->points[j].normal);
           Eigen::Vector4f delta = p2 - p1;     */
           p1 << input_point_normal->points[i].x,
-              input_point_normal->points[i].y, input_point_normal->points[i].z,
-              0.0f;
+              input_point_normal->points[i].y, input_point_normal->points[i].z;
           p2 << input_point_normal->points[j].x,
-              input_point_normal->points[j].y, input_point_normal->points[j].z,
-              0.0f;
+              input_point_normal->points[j].y, input_point_normal->points[j].z;
           n1 << input_point_normal->points[i].normal_x,
               input_point_normal->points[i].normal_y,
-              input_point_normal->points[i].normal_z, 0.0f;
+              input_point_normal->points[i].normal_z;
           n2 << input_point_normal->points[j].normal_x,
               input_point_normal->points[j].normal_y,
-              input_point_normal->points[j].normal_z, 0.0f;
+              input_point_normal->points[j].normal_z;
           // std::cout<<input_point_normal->points[j]<<std::endl;
           delta = p2 - p1;//pt-pr
           float f4 = delta.norm();
@@ -88,12 +86,12 @@ void PPFEstimation::compute(
           feature.f4 = f4;
           feature.alpha_m = 0.0f;
           data.second.Or =
-              (std::make_pair(n1.cross3(delta)/(n1.cross3(delta)).norm(),
-                              std::make_pair(n1.cross3(n1.cross3(delta))/(n1.cross3(n1.cross3(delta))).norm(), n1/n1.norm())));
+              (std::make_pair(n1.cross(delta)/(n1.cross(delta)).norm(),
+                              std::make_pair(n1.cross(n1.cross(delta))/(n1.cross(n1.cross(delta))).norm(), n1/n1.norm())));
 
           data.second.Ot =
-              (std::make_pair(n2.cross3(delta)/(n2.cross3(delta)).norm(),
-                              std::make_pair(n2.cross3(n2.cross3(delta))/(n2.cross3(n2.cross3(delta))).norm(), n2/n2.norm())));
+              (std::make_pair(n2.cross(delta)/(n2.cross(delta)).norm(),
+                              std::make_pair(n2.cross(n2.cross(delta))/(n2.cross(n2.cross(delta))).norm(), n2/n2.norm())));
 
           data.first.k1 =
               static_cast<int>(std::floor(f1 / angle_discretization_step));
