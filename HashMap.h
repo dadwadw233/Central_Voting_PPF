@@ -41,8 +41,8 @@
 #include "pcl/visualization/cloud_viewer.h"
 namespace Hash {
 struct HashData {
-  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>> Or;
-  std::pair<Eigen::Vector4f, std::pair<Eigen::Vector4f, Eigen::Vector4f>> Ot;
+  std::pair<Eigen::Vector3f, std::pair<Eigen::Vector3f, Eigen::Vector3f>> Or;
+  std::pair<Eigen::Vector3f, std::pair<Eigen::Vector3f, Eigen::Vector3f>> Ot;
   pcl::PointNormal r;
   pcl::PointNormal t;
 };
