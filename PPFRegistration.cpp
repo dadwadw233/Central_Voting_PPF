@@ -262,10 +262,13 @@ void PPFRegistration::compute() {
         feature.f3 = f3;
         feature.f4 = f4;
         feature.alpha_m = 0.0f;
-        data.second.Or = (std::make_pair(
-            n1.cross3(delta), std::make_pair(n1.cross3(n1.cross3(delta)), n1)));
-        data.second.Ot = (std::make_pair(
-            n2.cross3(delta), std::make_pair(n2.cross3(n2.cross3(delta)), n2)));
+        data.second.Or =
+            (std::make_pair(n1.cross3(delta)/(n1.cross3(delta)).norm(),
+                            std::make_pair(n1.cross3(n1.cross3(delta))/(n1.cross3(n1.cross3(delta))).norm(), n1/n1.norm())));
+
+        data.second.Ot =
+            (std::make_pair(n2.cross3(delta)/(n2.cross3(delta)).norm(),
+                            std::make_pair(n2.cross3(n2.cross3(delta))/(n2.cross3(n2.cross3(delta))).norm(), n2/n2.norm())));
 
         data.first.k1 =
             static_cast<int>(std::floor(f1 / angle_discretization_step));
