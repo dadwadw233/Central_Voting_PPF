@@ -114,10 +114,10 @@ void CentralVoting::Solve() {
     scene_cloud = SimpleDownSample(scene);
   }
   this->scene_subsampled = DownSample(scene_cloud);*/
-  //this->scene_subsampled = subsampleAndCalculateNormals(scene);
+  this->scene_subsampled = subsampleAndCalculateNormals(scene);
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*scene, center);
-  this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200, center[1], center[2], false);
+  //this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200, center[1], center[2], false);
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::cout<<center<<std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
@@ -154,7 +154,7 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(1);
+    ppf_registration.setPositionClusteringThreshold(0.2);
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);

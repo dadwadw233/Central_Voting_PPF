@@ -426,7 +426,7 @@ void PPFRegistration::compute() {
   }
 
 #pragma omp barrier
-  /*
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
@@ -434,18 +434,19 @@ void PPFRegistration::compute() {
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp(
       new pcl::PointCloud<pcl::PointXYZ>());
   std::vector<int> indices;
+  triple_scene->is_dense = false;
   pcl::removeNaNFromPointCloud(*triple_scene, *temp, indices);
   tree->setInputCloud(temp);
 
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(3);
+  ec.setMinClusterSize(100);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
-*/
+
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if(this->map_.empty()){
@@ -459,9 +460,9 @@ void PPFRegistration::compute() {
       }
       auto cnt = HypoVerification(T_mean);
 
-      Eigen::Affine3f temp(T_mean);
+      Eigen::Affine3f temp_(T_mean);
       //std::cout<<temp.matrix()<<std::endl;
-      struct data node(temp, cnt + i.second.value);
+      struct data node(temp_, cnt + i.second.value);
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
@@ -481,31 +482,33 @@ void PPFRegistration::compute() {
   }
 
   /**generate cluster **/
-  /*
+
     for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
       for (auto j = 0; j < i->indices.size(); j++) {
-        triple->points.push_back(triple_scene->points[i->indices[j]]);
+        triple->points.push_back(temp->points[i->indices[j]]);
       }
     }
-  */
-  /*visualize*/
 
-  std::cout << "\ntriple size: " << triple_scene->size() << std::endl;
+  /*visualize*/
+/*
+  std::cout << "\ntriple size: " << temp->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-      triple_scene, 255, 0, 0);
+      triple, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
-  view.addPointCloud(triple_scene, red, "triple");
+  view.addPointCloud(triple, red, "triple");
+  view.setPointCloudRenderingProperties(
+      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
 
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-
+*/
 
 }
