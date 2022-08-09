@@ -492,7 +492,7 @@ void PPFRegistration::compute() {
 
   std::cout << "\ntriple size: " << triple_scene->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
-/*
+
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
@@ -506,6 +506,6 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-*/
+
 
 }
