@@ -263,12 +263,12 @@ void PPFRegistration::compute() {
         feature.f4 = f4;
         feature.alpha_m = 0.0f;
         data.second.Or =
-            (std::make_pair(n1.cross(delta)/(n1.cross(delta)).norm(),
-                            std::make_pair(n1.cross(n1.cross(delta))/(n1.cross(n1.cross(delta))).norm(), n1/n1.norm())));
+            (std::make_pair(n1.cross(delta),
+                            std::make_pair(n1.cross(n1.cross(delta)), n1)));
 
         data.second.Ot =
-            (std::make_pair(n2.cross(delta)/(n2.cross(delta)).norm(),
-                            std::make_pair(n2.cross(n2.cross(delta))/(n2.cross(n2.cross(delta))).norm(), n2/n2.norm())));
+            (std::make_pair(n2.cross(delta),
+                            std::make_pair(n2.cross(n2.cross(delta)), n2)));
 
         data.first.k1 =
             static_cast<int>(std::floor(f1 / angle_discretization_step));
@@ -441,7 +441,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(100);
+  ec.setMinClusterSize(10);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -490,7 +490,7 @@ void PPFRegistration::compute() {
     }
 
   /*visualize*/
-/*
+
   std::cout << "\ntriple size: " << temp->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
@@ -509,6 +509,6 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-*/
+
 
 }
