@@ -86,12 +86,12 @@ void PPFEstimation::compute(
           feature.f4 = f4;
           feature.alpha_m = 0.0f;
           data.second.Or =
-              (std::make_pair(n1.cross(delta),
-                              std::make_pair(n1.cross(n1.cross(delta)), n1)));
+              (std::make_pair(n1.cross(delta)/(n1.cross(delta)).norm(),
+                              std::make_pair(n1.cross(n1.cross(delta))/(n1.cross(n1.cross(delta))).norm(), n1/n1.norm())));
 
           data.second.Ot =
-              (std::make_pair(n2.cross(delta),
-                              std::make_pair(n2.cross(n2.cross(delta)), n2)));
+              (std::make_pair(n2.cross(delta)/(n2.cross(delta)).norm(),
+                              std::make_pair(n2.cross(n2.cross(delta))/(n2.cross(n2.cross(delta))).norm(), n2/n2.norm())));
 
           data.first.k1 =
               static_cast<int>(std::floor(f1 / angle_discretization_step));
