@@ -329,7 +329,8 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.setKSearch(20);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
@@ -366,7 +367,8 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.setKSearch(20);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
   if (reverse) {
     for (auto i : *cloud_subsampled_normals) {
@@ -412,7 +414,8 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.setKSearch(20);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
   if (reverse) {
     for (auto i : *cloud_subsampled_normals) {
