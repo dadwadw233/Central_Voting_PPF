@@ -443,7 +443,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(1);
+  ec.setMinClusterSize(2);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -492,7 +492,7 @@ void PPFRegistration::compute() {
     }
 
   /*visualize*/
-
+/*
   std::cout << "\ntriple size: " << temp->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
@@ -511,7 +511,7 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-
+*/
 
 
 }
