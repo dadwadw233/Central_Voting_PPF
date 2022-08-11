@@ -25,17 +25,17 @@ int main(int argc, char** argv) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(
       new pcl::PointCloud<pcl::PointXYZ>());;	//保存结果的点云
   agn.setInputCloud(*scene);				//设置输入点云
-  agn.setParameters(0,2);						//设置高斯噪声参数mu,sigma
+  agn.setParameters(0,1);						//设置高斯噪声参数mu,sigma
   agn.addGaussNoise(*cloud_out);
   std::cout<<"scene size: "<<cloud_out->points.size()<<std::endl;
-  CentralVoting handle(cloud_out, model);
+  CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
-  handle.setNormalEstimationRadius(10.0f);
-  handle.setDownSampleStep(10.0f);
+  handle.setNormalEstimationRadius(16.0f);
+  handle.setDownSampleStep(16.0f);
   handle.setAngleThreshold(20);
-  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
+  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(12.0f, 12.0f, 12.0f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000,4.0f);
-  // handle.test();
+  //handle.test();
   handle.Solve();
   return 0;
 }

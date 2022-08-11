@@ -206,6 +206,8 @@ void PPFRegistration::compute() {
   auto tp1 = boost::chrono::steady_clock::now();
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
+  std::cout<<"finish Registering init"<<std::endl;
+  std::cout<<"computing ..."<<std::endl;
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
@@ -441,7 +443,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(2);
+  ec.setMinClusterSize(1);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -502,13 +504,14 @@ void PPFRegistration::compute() {
       scene_cloud_with_normal, 255, 255, 255);
   view.addPointCloud(triple, red, "triple");
   view.setPointCloudRenderingProperties(
-      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 10, "triple");
+      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
 
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
+
 
 
 }
