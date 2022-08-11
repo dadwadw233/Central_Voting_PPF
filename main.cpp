@@ -21,13 +21,18 @@ int main(int argc, char** argv) {
   reader.read(argv[1], *model);
   reader.read(argv[2], *scene);
   std::cout << argv[1] << " " << argv[2] << std::endl;
-  AddGaussNoise agn;							//创建高斯噪声对象agn
+  /*AddGaussNoise agn;							//创建高斯噪声对象agn
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(
       new pcl::PointCloud<pcl::PointXYZ>());;	//保存结果的点云
   agn.setInputCloud(*scene);				//设置输入点云
   agn.setParameters(0,1);						//设置高斯噪声参数mu,sigma
   agn.addGaussNoise(*cloud_out);
-  std::cout<<"scene size: "<<cloud_out->points.size()<<std::endl;
+  std::cout<<"scene size: "<<cloud_out->points.size()<<std::endl;*/
+  for(auto &i:scene->points){
+    i.x*=2;
+    i.y*=2;
+    i.z*=2;
+  }
   CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(16.0f);

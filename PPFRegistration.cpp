@@ -443,7 +443,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(1);
+  ec.setMinClusterSize(2);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -504,7 +504,7 @@ void PPFRegistration::compute() {
       scene_cloud_with_normal, 255, 255, 255);
   view.addPointCloud(triple, red, "triple");
   view.setPointCloudRenderingProperties(
-      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
+      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
 
   while (!view.wasStopped()) {

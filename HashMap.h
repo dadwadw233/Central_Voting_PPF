@@ -52,7 +52,7 @@ struct HashKey {
   int k3;
   int k4;
   bool operator==(const HashKey &k) const {
-    return k1 == k.k1 && k2 == k.k2 && k3 == k.k3 && k4 == k.k4;
+    return k1 == k.k1 && k2 == k.k2 && k3 == k.k3;
   }
 };
 
