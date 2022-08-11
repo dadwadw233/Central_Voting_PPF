@@ -1,7 +1,7 @@
 #include <pcl/console/parse.h>
 #include "CentralVoting.h"
 #include "pcl/io/pcd_io.h"
-
+#include "add_gauss_noise.h"
 int main(int argc, char** argv) {
   if (argc <= 1) {
     PCL_ERROR("Syntax: ./central_voting pcd_model_list pcd_scene(optional)\n");
@@ -18,11 +18,17 @@ int main(int argc, char** argv) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::PCDReader reader;
-
   reader.read(argv[1], *model);
   reader.read(argv[2], *scene);
   std::cout << argv[1] << " " << argv[2] << std::endl;
-  CentralVoting handle(scene, model);
+  AddGaussNoise agn;							//创建高斯噪声对象agn
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(
+      new pcl::PointCloud<pcl::PointXYZ>());;	//保存结果的点云
+  agn.setInputCloud(*scene);				//设置输入点云
+  agn.setParameters(0,2);						//设置高斯噪声参数mu,sigma
+  agn.addGaussNoise(*cloud_out);
+  std::cout<<"scene size: "<<cloud_out->points.size()<<std::endl;
+  CentralVoting handle(cloud_out, model);
   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(10.0f);
   handle.setDownSampleStep(10.0f);
