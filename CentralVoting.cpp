@@ -175,10 +175,11 @@ void CentralVoting::Solve() {
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
+  auto tp1 = std::chrono::steady_clock::now();
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(2);
+    ppf_registration.setPositionClusteringThreshold(12);
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
@@ -204,7 +205,11 @@ void CentralVoting::Solve() {
     view.addPointCloud(output_model, red, "out");
     view.addPointCloud(this->scene, white, "scene");
   }
-
+  auto tp2 = std::chrono::steady_clock::now();
+  std::cout << "\nneed "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1)
+                   .count()
+            << "ms for online process" << std::endl;
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));

@@ -70,6 +70,15 @@ void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
     map_.emplace(key, d);
   }
 }
+void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
+  if(map_center.find(key)!=map_center.end()){
+    (map_center.find(key)->second).value += 1;
+    (map_center.find(key)->second).T_set.push_back(T);
+  }else {
+    data_ d(T, 1);
+    map_center.emplace(key, d);
+  }
+}
 
 void PPFRegistration::establishVoxelGrid() {
   pcl::PointNormal max_point, min_point;
@@ -416,6 +425,9 @@ void PPFRegistration::compute() {
 
           key_ key_1(index_1[0], index_1[1], index_1[2]);
           key_ key_2(index_2[0], index_2[1], index_2[2]);
+          //if(fabs(index_1[0]-index_2[0])>10){
+          //  continue;
+          //}
 #pragma omp critical
           this->vote(key_1, transform_1);
 #pragma omp critical
@@ -428,7 +440,7 @@ void PPFRegistration::compute() {
   }
 
 #pragma omp barrier
-
+/*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
@@ -448,7 +460,7 @@ void PPFRegistration::compute() {
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
-
+*/
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if(this->map_.empty()){
@@ -484,13 +496,13 @@ void PPFRegistration::compute() {
   }
 
   /**generate cluster **/
-
+/*
     for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
       for (auto j = 0; j < i->indices.size(); j++) {
         triple->points.push_back(temp->points[i->indices[j]]);
       }
     }
-
+*/
   /*visualize*/
 /*
   std::cout << "\ntriple size: " << temp->size() << std::endl;

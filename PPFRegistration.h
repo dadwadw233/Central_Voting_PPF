@@ -85,6 +85,8 @@ class PPFRegistration {
   };
   void vote(const key_ &key, const Eigen::Affine3f &T);
 
+  void vote(const int &key, const Eigen::Affine3f &T);
+
   decltype(auto) HypoVerification(const Eigen::Affine3f &T);
 
   decltype(auto) HypoVerification(const Eigen::Matrix4f &T);
@@ -127,6 +129,7 @@ class PPFRegistration {
     }
   };
   std::unordered_map<key_, data_, hash_cal> map_;
+  std::unordered_map<int, data_>map_center;
   std::priority_queue<data, std::vector<data>, cmp>T_queue;
 };
 
