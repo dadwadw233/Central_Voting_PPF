@@ -15,7 +15,12 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normal_estimation_search_radius);
+  if(isSetRadius){
+    normal_estimation_filter.setRadiusSearch(normal_estimation_search_radius);
+  }
+  else{
+    normal_estimation_filter.setKSearch(normal_estimation_search_k_points);
+  }
   normal_estimation_filter.compute(*normal);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(
@@ -177,7 +182,12 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
       std::vector<int> indices;
       //每个点到searchPoint的距离(暂时用不到)
       std::vector<float> distance;
-      tree->radiusSearch(searchPoint, radius, indices, distance);
+
+      if(isSetPoints){
+        tree->nearestKSearch(searchPoint, map.size()-1, indices, distance);
+      }else{
+        tree->radiusSearch(searchPoint, radius, indices, distance);
+      }
 
       //输出参数1>平面数据(可以转化为法向量)
       Eigen::Vector4f planeParams;
@@ -206,6 +216,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
 void SmartDownSample::setIsdense(const bool &data) { this->isdense = data; }
 void SmartDownSample::setRadius(float data) {
   this->normal_estimation_search_radius = data;
+  this->isSetPoints = false;
+  this->isSetRadius = true;
 }
 template <class T>
 float SmartDownSample::calculateDistance(T &pointA, T &pointB) {
@@ -220,4 +232,10 @@ float SmartDownSample::calculateDistance(T &pointA, pcl::PointNormal &pointB) {
                    std::pow((pointA.y - pointB.y), 2) +
                    std::pow((pointA.z - pointB.z), 2);
   return distance;
+}
+
+void SmartDownSample::setKSearch(const int data) {
+  this->normal_estimation_search_k_points = data;
+  this->isSetPoints = true;
+  this->isSetRadius = false;
 }

@@ -100,8 +100,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
                                 std::make_pair(min_point.y, max_point.y),
                                 std::make_pair(min_point.z, max_point.z),
                                 this->step, this->AngleThreshold, 0.01);
-  sample_filter.setIsdense(false);
-  sample_filter.setRadius(this->normalEstimationRadius);
+  sample_filter.setIsdense(true);
+  //sample_filter.setRadius(this->normalEstimationRadius);
+  sample_filter.setKSearch(this->k_point);
   return sample_filter.compute();
 }
 
@@ -112,26 +113,49 @@ void CentralVoting::Solve() {
     scene_cloud = adaptiveDownSample(scene);
   }else{
     scene_cloud = SimpleDownSample(scene);
-  }
-  this->scene_subsampled = DownSample(scene_cloud);*/
+  }*/
+  //this->scene_subsampled = DownSample(scene_cloud);
   //this->scene_subsampled = subsampleAndCalculateNormals(scene);
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*scene, center);
-  this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200, center[1], center[2], false);
+  //this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200, center[1], center[2], false);
+  this->scene_subsampled = subsampleAndCalculateNormals(scene, this->triple_set[0], false);
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::cout<<center<<std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
-    /*auto model_cloud = SimpleDownSample(model_set[i]);
-    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-        DownSample(model_cloud);*/
+    //auto model_cloud = SimpleDownSample(model_set[i]);
+    //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+        //DownSample(model_cloud);
     // pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
     // subsampleAndCalculateNormals(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
         subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
     cloud_models_with_normal.push_back(model_with_normal);
+/**
+ * 可视化法线
+ *
+ *
+ *
 
+    pcl::visualization::PCLVisualizer view("subsampled point cloud");
+    view.setBackgroundColor(0, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
+        model_with_normal, 255, 0, 0);
+    view.addPointCloud(model_with_normal, red, "model");
+    view.addPointCloudNormals<pcl::PointNormal>(model_with_normal, 1, 5,
+                                                "model with normal");
+
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
+        scene_subsampled, 0, 255, 0);
+    view.addPointCloud(scene_subsampled, white, "scene");
+    view.addPointCloudNormals<pcl::PointNormal>(scene_subsampled, 1, 5, "scene with normals");
+    while (!view.wasStopped()) {
+      view.spinOnce(100);
+      boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    }
+   **/
     PCL_INFO("begin to establish ppf\n");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
         new pcl::PointCloud<pcl::PPFSignature>());
@@ -151,10 +175,11 @@ void CentralVoting::Solve() {
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
+  auto tp1 = std::chrono::steady_clock::now();
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(1);
+    ppf_registration.setPositionClusteringThreshold(12);
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
@@ -180,7 +205,11 @@ void CentralVoting::Solve() {
     view.addPointCloud(output_model, red, "out");
     view.addPointCloud(this->scene, white, "scene");
   }
-
+  auto tp2 = std::chrono::steady_clock::now();
+  std::cout << "\nneed "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1)
+                   .count()
+            << "ms for online process" << std::endl;
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
@@ -188,16 +217,16 @@ void CentralVoting::Solve() {
 }
 
 void CentralVoting::test() {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr model_cloud =
+  pcl::PointCloud<pcl::PointXYZ>::Ptr scene_ =
       boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   if (isAdaptiveDownSample) {
-    model_cloud = adaptiveDownSample(model_set[0]);
+    scene_ = adaptiveDownSample(this->scene);
   } else {
-    model_cloud = SimpleDownSample(model_set[0]);
+    scene_ = SimpleDownSample(this->scene);
   }
 
   pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-      DownSample(model_cloud);
+      DownSample(scene_);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
@@ -310,6 +339,8 @@ void CentralVoting::setAdaptiveDownSampleOption(const bool &lhs, const int &rhs,
     this->adaptive_step = step_;
   }
 }
+
+
 pcl::PointCloud<pcl::PointNormal>::Ptr
 CentralVoting::subsampleAndCalculateNormals(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud)  //降采样并计算表面法向量
@@ -329,7 +360,8 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.setKSearch(k_point);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
@@ -366,7 +398,8 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.setKSearch(k_point);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
   if (reverse) {
     for (auto i : *cloud_subsampled_normals) {
@@ -412,7 +445,8 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.setKSearch(k_point);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
   if (reverse) {
     for (auto i : *cloud_subsampled_normals) {

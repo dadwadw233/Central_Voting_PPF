@@ -73,6 +73,7 @@ class SmartDownSample {
    */
   void setRadius(float data);
 
+  void setKSearch(const int data);
   /** \brief Calculate the distance between two points
    * \param[in] points
    */
@@ -92,6 +93,9 @@ class SmartDownSample {
   float step;
   float angleThreshold, distanceThreshold;
   float normal_estimation_search_radius;
+  int normal_estimation_search_k_points;
+  bool isSetRadius = false;
+  bool isSetPoints = false;
   bool isdense = false;
 };
 

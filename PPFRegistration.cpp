@@ -70,6 +70,15 @@ void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
     map_.emplace(key, d);
   }
 }
+void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
+  if(map_center.find(key)!=map_center.end()){
+    (map_center.find(key)->second).value += 1;
+    (map_center.find(key)->second).T_set.push_back(T);
+  }else {
+    data_ d(T, 1);
+    map_center.emplace(key, d);
+  }
+}
 
 void PPFRegistration::establishVoxelGrid() {
   pcl::PointNormal max_point, min_point;
@@ -206,6 +215,8 @@ void PPFRegistration::compute() {
   auto tp1 = boost::chrono::steady_clock::now();
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
+  std::cout<<"finish Registering init"<<std::endl;
+  std::cout<<"computing ..."<<std::endl;
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
@@ -414,6 +425,9 @@ void PPFRegistration::compute() {
 
           key_ key_1(index_1[0], index_1[1], index_1[2]);
           key_ key_2(index_2[0], index_2[1], index_2[2]);
+          //if(fabs(index_1[0]-index_2[0])>10){
+          //  continue;
+          //}
 #pragma omp critical
           this->vote(key_1, transform_1);
 #pragma omp critical
@@ -426,7 +440,7 @@ void PPFRegistration::compute() {
   }
 
 #pragma omp barrier
-  /*
+/*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
@@ -434,13 +448,14 @@ void PPFRegistration::compute() {
   pcl::PointCloud<pcl::PointXYZ>::Ptr temp(
       new pcl::PointCloud<pcl::PointXYZ>());
   std::vector<int> indices;
+  triple_scene->is_dense = false;
   pcl::removeNaNFromPointCloud(*triple_scene, *temp, indices);
   tree->setInputCloud(temp);
 
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(3);
+  ec.setMinClusterSize(2);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -459,9 +474,9 @@ void PPFRegistration::compute() {
       }
       auto cnt = HypoVerification(T_mean);
 
-      Eigen::Affine3f temp(T_mean);
+      Eigen::Affine3f temp_(T_mean);
       //std::cout<<temp.matrix()<<std::endl;
-      struct data node(temp, cnt + i.second.value);
+      struct data node(temp_, cnt + i.second.value);
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
@@ -481,31 +496,34 @@ void PPFRegistration::compute() {
   }
 
   /**generate cluster **/
-  /*
+/*
     for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
       for (auto j = 0; j < i->indices.size(); j++) {
-        triple->points.push_back(triple_scene->points[i->indices[j]]);
+        triple->points.push_back(temp->points[i->indices[j]]);
       }
     }
-  */
+*/
   /*visualize*/
-
-  std::cout << "\ntriple size: " << triple_scene->size() << std::endl;
+/*
+  std::cout << "\ntriple size: " << temp->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-      triple_scene, 255, 0, 0);
+      triple, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
-  view.addPointCloud(triple_scene, red, "triple");
+  view.addPointCloud(triple, red, "triple");
+  view.setPointCloudRenderingProperties(
+      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
 
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
+*/
 
 
 }

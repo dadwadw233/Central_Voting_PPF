@@ -31,7 +31,8 @@ add_executable(central_voting
         SmartDownSample.h
         HashMap.cpp
         HashMap.h
-        PPFRegistration.cpp PPFRegistration.h)
+        PPFRegistration.cpp PPFRegistration.h
+        add_gauss_noise.cpp add_gauss_noise.h)
 
 target_link_libraries(central_voting ${PCL_LIBRARIES} tbb)
 
