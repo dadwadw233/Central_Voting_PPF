@@ -119,7 +119,7 @@ void CentralVoting::Solve() {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*scene, center);
   //this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200, center[1], center[2], false);
-  this->scene_subsampled = subsampleAndCalculateNormals(scene, this->triple_set[0], false);
+  this->scene_subsampled = subsampleAndCalculateNormals(scene, Eigen::Vector4f(18.0f, 18.0f, 18.0f, 0.0f));
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::cout<<center<<std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
@@ -179,7 +179,7 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(12);
+    ppf_registration.setPositionClusteringThreshold(3);//投票的体素网格的size
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
@@ -351,6 +351,42 @@ CentralVoting::subsampleAndCalculateNormals(
   pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;  //创建体素栅格
   subsampling_filter.setInputCloud(cloud);
   subsampling_filter.setLeafSize(subsampling_leaf_size);  // 设置采样体素大小
+  subsampling_filter.filter(*cloud_subsampled);
+
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(
+      new pcl::PointCloud<pcl::Normal>());
+  pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
+  normal_estimation_filter.setInputCloud(cloud_subsampled);
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
+      new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
+  normal_estimation_filter.setSearchMethod(search_tree);
+  normal_estimation_filter.setKSearch(k_point);
+  //normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
+  normal_estimation_filter.compute(*cloud_subsampled_normals);
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr cloud_subsampled_with_normals(
+      new pcl::PointCloud<pcl::PointNormal>());
+  concatenateFields(
+      *cloud_subsampled, *cloud_subsampled_normals,
+      *cloud_subsampled_with_normals);  // concatenate point cloud and its
+                                        // normal into a new cloud
+
+  PCL_INFO("Cloud dimensions before / after subsampling: %zu / %zu\n",
+           static_cast<std::size_t>(cloud->size()),
+           static_cast<std::size_t>(cloud_subsampled->size()));
+  return cloud_subsampled_with_normals;
+}
+
+pcl::PointCloud<pcl::PointNormal>::Ptr
+CentralVoting::subsampleAndCalculateNormals(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, const Eigen::Vector4f &leaf_size) const  //降采样并计算表面法向量
+{
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_subsampled(
+      new pcl::PointCloud<
+          pcl::PointXYZ>());  //直接进行降采样，没有进行额外的处理
+  pcl::VoxelGrid<pcl::PointXYZ> subsampling_filter;  //创建体素栅格
+  subsampling_filter.setInputCloud(cloud);
+  subsampling_filter.setLeafSize(leaf_size);  // 设置采样体素大小
   subsampling_filter.filter(*cloud_subsampled);
 
   pcl::PointCloud<pcl::Normal>::Ptr cloud_subsampled_normals(

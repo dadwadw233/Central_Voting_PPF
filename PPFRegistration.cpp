@@ -440,7 +440,7 @@ void PPFRegistration::compute() {
   }
 
 #pragma omp barrier
-/*
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
@@ -460,7 +460,7 @@ void PPFRegistration::compute() {
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
-*/
+
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if(this->map_.empty()){
@@ -496,13 +496,13 @@ void PPFRegistration::compute() {
   }
 
   /**generate cluster **/
-/*
+
     for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
       for (auto j = 0; j < i->indices.size(); j++) {
         triple->points.push_back(temp->points[i->indices[j]]);
       }
     }
-*/
+
   /*visualize*/
 /*
   std::cout << "\ntriple size: " << temp->size() << std::endl;
@@ -514,7 +514,10 @@ void PPFRegistration::compute() {
       triple, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
+      model_cloud_with_normal, 0, 255, 0);
   view.addPointCloud(triple, red, "triple");
+  view.addPointCloud(model_cloud_with_normal, green, "model");
   view.setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
