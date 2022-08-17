@@ -70,6 +70,15 @@ void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
     map_.emplace(key, d);
   }
 }
+void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
+  if(map_center.find(key)!=map_center.end()){
+    (map_center.find(key)->second).value += 1;
+    (map_center.find(key)->second).T_set.push_back(T);
+  }else {
+    data_ d(T, 1);
+    map_center.emplace(key, d);
+  }
+}
 
 void PPFRegistration::establishVoxelGrid() {
   pcl::PointNormal max_point, min_point;
@@ -178,6 +187,10 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
 
   #pragma omp barrier
   return cnt;
+}
+template <class T>
+float calculateDistance(T &pointA, T &pointB){
+  return sqrt(pow(pointA[0]-pointB[0],2)+pow(pointA[1]-pointB[1],2)+pow(pointA[2]-pointB[2],2));
 }
 void PPFRegistration::compute() {
   // pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene =
@@ -345,6 +358,15 @@ void PPFRegistration::compute() {
           pcl::PointXYZ p;
           Eigen::Affine3f transform_1(T_1);
           Eigen::Affine3f transform_2(T_2);
+          Eigen::Vector3f model_center{};
+          Eigen::Vector3f hypo_center{};
+          Eigen::Vector3f hypo_center_{};
+          model_center<<triple_set[0].x, triple_set[0].y, triple_set[0].z;
+          pcl::transformPoint(model_center, hypo_center, transform_1);
+          pcl::transformPoint(model_center, hypo_center_, transform_2);
+          if(::calculateDistance(hypo_center, hypo_center_)>100){
+            continue;
+          }
           std::vector<int> index_1, index_2;
           for (int i = 0; i < 3; i++) {
             Eigen::Vector3f m{};
@@ -419,6 +441,9 @@ void PPFRegistration::compute() {
 
           key_ key_1(index_1[0], index_1[1], index_1[2]);
           key_ key_2(index_2[0], index_2[1], index_2[2]);
+          //if(fabs(index_1[0]-index_2[0])>10){
+          //  continue;
+          //}
 #pragma omp critical
           this->vote(key_1, transform_1);
 #pragma omp critical
@@ -446,7 +471,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(1);
+  ec.setMinClusterSize(2);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -495,7 +520,7 @@ void PPFRegistration::compute() {
     }
 
   /*visualize*/
-
+/*
   std::cout << "\ntriple size: " << temp->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
@@ -505,7 +530,10 @@ void PPFRegistration::compute() {
       triple, 255, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
       scene_cloud_with_normal, 255, 255, 255);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
+      model_cloud_with_normal, 0, 255, 0);
   view.addPointCloud(triple, red, "triple");
+  view.addPointCloud(model_cloud_with_normal, green, "model");
   view.setPointCloudRenderingProperties(
       pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "triple");
   view.addPointCloud(scene_cloud_with_normal, white, "scene");
@@ -514,7 +542,7 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-
+*/
 
 
 }

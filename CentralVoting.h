@@ -98,6 +98,15 @@ class CentralVoting {
 
   pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
+      const Eigen::Vector4f &subsampling_leaf_size,
+      const std::vector<pcl::PointXYZ> &view_point, const bool &reverse);
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
+      const Eigen::Vector4f &leaf_size) const;
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,
       const std::vector<pcl::PointXYZ> &view_point, const bool &reverse);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
