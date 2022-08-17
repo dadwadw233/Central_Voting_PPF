@@ -520,7 +520,7 @@ void PPFRegistration::compute() {
     }
 
   /*visualize*/
-/*
+
   std::cout << "\ntriple size: " << temp->size() << std::endl;
   std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
@@ -542,7 +542,7 @@ void PPFRegistration::compute() {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
   }
-*/
+
 
 
 }
