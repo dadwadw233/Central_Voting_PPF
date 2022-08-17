@@ -29,16 +29,16 @@ int main(int argc, char** argv) {
   agn.addGaussNoise(*cloud_out);
   std::cout<<"scene size: "<<cloud_out->points.size()<<std::endl;*/
   for(auto &i:scene->points){
-    i.x*=2;
-    i.y*=2;
-    i.z*=2;
+    i.x*=4;
+    i.y*=4;
+    i.z*=4;
   }
   CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(16.0f);
   handle.setDownSampleStep(16.0f);
   handle.setAngleThreshold(20);
-  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(12.0f, 12.0f, 12.0f, 0.0f));
+  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(14.0f, 14.0f, 14.0f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000,4.0f);
   //handle.test();
   handle.Solve();

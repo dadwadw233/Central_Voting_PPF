@@ -222,10 +222,12 @@ void PPFRegistration::compute() {
       new pcl::PointCloud<pcl::PointXYZ>());
   std::cout<<"finish Registering init"<<std::endl;
   std::cout<<"computing ..."<<std::endl;
+  int scale_cnt = 0;
+  float scale = 0;
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
-    scene_reference_point_sampling_rate, r_num) private(p1, p2, n1, n2, delta,       \
+    scene_reference_point_sampling_rate, r_num, scale, scale_cnt) private(p1, p2, n1, n2, delta,       \
                                                  feature, data) default(none) \
     num_threads(15)
     for (auto j = 0; j < scene_cloud_with_normal->points.size() / 10; ++j) {
@@ -292,7 +294,7 @@ void PPFRegistration::compute() {
             static_cast<int>(std::floor(f2 / angle_discretization_step));
         data.first.k3 =
             static_cast<int>(std::floor(f3 / angle_discretization_step));
-        data.first.k4 =
+        data.second.dist =
             static_cast<int>(std::floor(f4 / distance_discretization_step));
 
         data.second.r = scene_cloud_with_normal->points[i];
@@ -364,10 +366,14 @@ void PPFRegistration::compute() {
           model_center<<triple_set[0].x, triple_set[0].y, triple_set[0].z;
           pcl::transformPoint(model_center, hypo_center, transform_1);
           pcl::transformPoint(model_center, hypo_center_, transform_2);
-          if(::calculateDistance(hypo_center, hypo_center_)>100){
+          if(::calculateDistance(hypo_center, hypo_center_)>50){
             continue;
           }
           std::vector<int> index_1, index_2;
+#pragma omp critical
+          scale+=data.second.dist/model_lrf.dist;
+#pragma omp critical
+          ++scale_cnt;
           for (int i = 0; i < 3; i++) {
             Eigen::Vector3f m{};
             Eigen::Vector3f s{};
@@ -457,6 +463,8 @@ void PPFRegistration::compute() {
 
 #pragma omp barrier
 
+
+  std::cout<<"hypo scale: "<<scale/scale_cnt<<std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(

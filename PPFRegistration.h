@@ -50,6 +50,9 @@ class PPFRegistration {
   PPFRegistration(const PPFRegistration &) = delete;
 
  private:
+  struct scale{
+
+  };
   struct data_ {
     std::vector<Eigen::Affine3f> T_set;
     int value = 0;
@@ -134,6 +137,7 @@ class PPFRegistration {
   std::unordered_map<key_, data_, hash_cal> map_;
   std::unordered_map<int, data_>map_center;
   std::priority_queue<data, std::vector<data>, cmp>T_queue;
+  //std::priority_queue<data, std::vector<data>, cmp>T_queue;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H

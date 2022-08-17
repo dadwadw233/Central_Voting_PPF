@@ -99,7 +99,7 @@ void PPFEstimation::compute(
               static_cast<int>(std::floor(f2 / angle_discretization_step));
           data.first.k3 =
               static_cast<int>(std::floor(f3 / angle_discretization_step));
-          data.first.k4 =
+          data.second.dist =
               static_cast<int>(std::floor(f4 / distance_discretization_step));
 
           data.second.r = input_point_normal->points[i];
