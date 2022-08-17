@@ -91,6 +91,9 @@ class PPFRegistration {
 
   decltype(auto) HypoVerification(const Eigen::Matrix4f &T);
 
+  template <class T>
+  float calculateDistance(T &pointA, T &pointB);
+
   decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set){
     Eigen::Matrix4f temp;
     temp<<0,0,0,0,

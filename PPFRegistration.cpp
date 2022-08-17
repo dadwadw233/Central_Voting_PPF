@@ -188,6 +188,10 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   #pragma omp barrier
   return cnt;
 }
+template <class T>
+float calculateDistance(T &pointA, T &pointB){
+  return sqrt(pow(pointA[0]-pointB[0],2)+pow(pointA[1]-pointB[1],2)+pow(pointA[2]-pointB[2],2));
+}
 void PPFRegistration::compute() {
   // pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene =
   // boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -351,6 +355,15 @@ void PPFRegistration::compute() {
           pcl::PointXYZ p;
           Eigen::Affine3f transform_1(T_1);
           Eigen::Affine3f transform_2(T_2);
+          Eigen::Vector3f model_center{};
+          Eigen::Vector3f hypo_center{};
+          Eigen::Vector3f hypo_center_{};
+          model_center<<triple_set[0].x, triple_set[0].y, triple_set[0].z;
+          pcl::transformPoint(model_center, hypo_center, transform_1);
+          pcl::transformPoint(model_center, hypo_center_, transform_2);
+          if(::calculateDistance(hypo_center, hypo_center_)>100){
+            continue;
+          }
           std::vector<int> index_1, index_2;
           for (int i = 0; i < 3; i++) {
             Eigen::Vector3f m{};
