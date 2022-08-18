@@ -71,10 +71,10 @@ void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
   }
 }
 void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
-  if(map_center.find(key)!=map_center.end()){
+  if (map_center.find(key) != map_center.end()) {
     (map_center.find(key)->second).value += 1;
     (map_center.find(key)->second).T_set.push_back(T);
-  }else {
+  } else {
     data_ d(T, 1);
     map_center.emplace(key, d);
   }
@@ -101,7 +101,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
   double radius = 0.02 * this->d_obj;
   kdtree->setInputCloud(this->scene_cloud_with_normal);
   //#pragma omp parallel for shared(temp, radius, cnt,search_cloud, kdtree)
-  //default(none) num_threads(15)
+  // default(none) num_threads(15)
   for (auto i = temp->points.begin(); i != temp->points.end(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
@@ -109,15 +109,15 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
     kdtree->radiusSearch(*i, radius, indices, distance);
     if (!indices.empty()) {
       //#pragma omp critical
-      cnt +=0 ;
+      cnt += 0;
       continue;
     } else {
       int num = 0;
       for (auto j = 0; j < indices.size(); ++j) {
-        if (pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
-                                scene_cloud_with_normal->points[indices[j]].normal),
-                            static_cast<const Eigen::Vector3f>(i->normal),
-                            true) >= 25) {
+        if (pcl::getAngle3D(
+                static_cast<const Eigen::Vector3f>(
+                    scene_cloud_with_normal->points[indices[j]].normal),
+                static_cast<const Eigen::Vector3f>(i->normal), true) >= 25) {
           num++;
           break;
         } else {
@@ -129,7 +129,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
         cnt++;
       } else {
         //#pragma omp critical
-        cnt +=0 ;
+        cnt += 0;
       }
     }
   }
@@ -146,29 +146,30 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   auto cnt = 0;
   double radius = 0.02 * this->d_obj;
   kdtree->setInputCloud(this->scene_cloud_with_normal);
-  std::vector<int>nan;
+  std::vector<int> nan;
   pcl::PointCloud<pcl::PointNormal>::Ptr temp_ =
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
   temp_->is_dense = false;
   pcl::removeNaNFromPointCloud(*temp, *temp_, nan);
-  #pragma omp parallel for shared(temp, radius, cnt, kdtree, temp_) default(none) num_threads(15)
+#pragma omp parallel for shared(temp, radius, cnt, kdtree, \
+                                temp_) default(none) num_threads(15)
   for (auto i = 0; i < temp_->points.size(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
-    #pragma omp critical
+#pragma omp critical
     kdtree->radiusSearch(temp_->points[i], radius, indices, distance);
     if (indices.empty()) {
-      #pragma omp critical
+#pragma omp critical
       cnt += 0;
       continue;
     } else {
       int num = 0;
       for (auto j = 0; j < indices.size(); ++j) {
-        if (pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
-                                scene_cloud_with_normal->points[indices[j]].normal),
-                            static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
-                            true) < 25) {
-
+        if (pcl::getAngle3D(
+                static_cast<const Eigen::Vector3f>(
+                    scene_cloud_with_normal->points[indices[j]].normal),
+                static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
+                true) < 25) {
           num++;
           break;
         } else {
@@ -176,21 +177,22 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
         }
       }
       if (num > 0) {
-        #pragma omp critical
+#pragma omp critical
         cnt++;
       } else {
-        #pragma omp critical
+#pragma omp critical
         cnt += 0;
       }
     }
   }
 
-  #pragma omp barrier
+#pragma omp barrier
   return cnt;
 }
 template <class T>
-float calculateDistance(T &pointA, T &pointB){
-  return sqrt(pow(pointA[0]-pointB[0],2)+pow(pointA[1]-pointB[1],2)+pow(pointA[2]-pointB[2],2));
+float calculateDistance(T &pointA, T &pointB) {
+  return sqrt(pow(pointA[0] - pointB[0], 2) + pow(pointA[1] - pointB[1], 2) +
+              pow(pointA[2] - pointB[2], 2));
 }
 void PPFRegistration::compute() {
   // pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene =
@@ -219,8 +221,8 @@ void PPFRegistration::compute() {
   auto tp1 = boost::chrono::steady_clock::now();
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
-  std::cout<<"finish Registering init"<<std::endl;
-  std::cout<<"computing ..."<<std::endl;
+  std::cout << "finish Registering init" << std::endl;
+  std::cout << "computing ..." << std::endl;
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
@@ -277,13 +279,17 @@ void PPFRegistration::compute() {
         feature.f3 = f3;
         feature.f4 = f4;
         feature.alpha_m = 0.0f;
-        data.second.Or =
-            (std::make_pair(n1.cross(delta)/(n1.cross(delta)).norm(),
-                            std::make_pair(n1.cross(n1.cross(delta))/(n1.cross(n1.cross(delta))).norm(), n1/n1.norm())));
+        data.second.Or = (std::make_pair(
+            n1.cross(delta) / (n1.cross(delta)).norm(),
+            std::make_pair(
+                n1.cross(n1.cross(delta)) / (n1.cross(n1.cross(delta))).norm(),
+                n1 / n1.norm())));
 
-        data.second.Ot =
-            (std::make_pair(n2.cross(delta)/(n2.cross(delta)).norm(),
-                            std::make_pair(n2.cross(n2.cross(delta))/(n2.cross(n2.cross(delta))).norm(), n2/n2.norm())));
+        data.second.Ot = (std::make_pair(
+            n2.cross(delta) / (n2.cross(delta)).norm(),
+            std::make_pair(
+                n2.cross(n2.cross(delta)) / (n2.cross(n2.cross(delta))).norm(),
+                n2 / n2.norm())));
 
         data.first.k1 =
             static_cast<int>(std::floor(f1 / angle_discretization_step));
@@ -358,10 +364,10 @@ void PPFRegistration::compute() {
           Eigen::Vector3f model_center{};
           Eigen::Vector3f hypo_center{};
           Eigen::Vector3f hypo_center_{};
-          model_center<<triple_set[0].x, triple_set[0].y, triple_set[0].z;
+          model_center << triple_set[0].x, triple_set[0].y, triple_set[0].z;
           pcl::transformPoint(model_center, hypo_center, transform_1);
           pcl::transformPoint(model_center, hypo_center_, transform_2);
-          if(::calculateDistance(hypo_center, hypo_center_)>100){
+          if (::calculateDistance(hypo_center, hypo_center_) > 100) {
             continue;
           }
           std::vector<int> index_1, index_2;
@@ -438,7 +444,7 @@ void PPFRegistration::compute() {
 
           key_ key_1(index_1[0], index_1[1], index_1[2]);
           key_ key_2(index_2[0], index_2[1], index_2[2]);
-          //if(fabs(index_1[0]-index_2[0])>10){
+          // if(fabs(index_1[0]-index_2[0])>10){
           //  continue;
           //}
 #pragma omp critical
@@ -476,19 +482,19 @@ void PPFRegistration::compute() {
 
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
-  if(this->map_.empty()){
-    std::cout<<"no ans"<<std::endl;
-  }else{
+  if (this->map_.empty()) {
+    std::cout << "no ans" << std::endl;
+  } else {
     for (const auto &i : this->map_) {
       auto T_mean = getMeanMatrix(i.second.T_set);
-      //auto T_mean = i.second.T_set[0].matrix();
-      if(isnan(T_mean(0,0))){
+      // auto T_mean = i.second.T_set[0].matrix();
+      if (isnan(T_mean(0, 0))) {
         continue;
       }
       auto cnt = HypoVerification(T_mean);
 
       Eigen::Affine3f temp_(T_mean);
-      //std::cout<<temp.matrix()<<std::endl;
+      // std::cout<<temp.matrix()<<std::endl;
       struct data node(temp_, cnt + i.second.value);
       T_queue.push(node);
       if (i.second.value > max_vote) {
@@ -499,7 +505,7 @@ void PPFRegistration::compute() {
       }
     }
     std::cout << "final vote: " << max_vote << std::endl;
-    while(isnan(T_queue.top().T(0,0))){
+    while (isnan(T_queue.top().T(0, 0))) {
       T_queue.pop();
     }
     std::cout << "max value: " << T_queue.top().value << std::endl;
@@ -510,36 +516,34 @@ void PPFRegistration::compute() {
 
   /**generate cluster **/
 
-    for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
-      for (auto j = 0; j < i->indices.size(); j++) {
-        triple->points.push_back(temp->points[i->indices[j]]);
-      }
+  for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
+    for (auto j = 0; j < i->indices.size(); j++) {
+      triple->points.push_back(temp->points[i->indices[j]]);
     }
+  }
 
   /*visualize*/
-/*
-  std::cout << "\ntriple size: " << temp->size() << std::endl;
-  std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
+  /*
+    std::cout << "\ntriple size: " << temp->size() << std::endl;
+    std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
-  pcl::visualization::PCLVisualizer view("subsampled point cloud");
-  view.setBackgroundColor(0, 0, 0);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-      triple, 255, 0, 0);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
-      scene_cloud_with_normal, 255, 255, 255);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
-      model_cloud_with_normal, 0, 255, 0);
-  view.addPointCloud(triple, red, "triple");
-  view.addPointCloud(model_cloud_with_normal, green, "model");
-  view.setPointCloudRenderingProperties(
-      pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
-  view.addPointCloud(scene_cloud_with_normal, white, "scene");
+    pcl::visualization::PCLVisualizer view("subsampled point cloud");
+    view.setBackgroundColor(0, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+        triple, 255, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
+        scene_cloud_with_normal, 255, 255, 255);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
+        model_cloud_with_normal, 0, 255, 0);
+    view.addPointCloud(triple, red, "triple");
+    view.addPointCloud(model_cloud_with_normal, green, "model");
+    view.setPointCloudRenderingProperties(
+        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
+    view.addPointCloud(scene_cloud_with_normal, white, "scene");
 
-  while (!view.wasStopped()) {
-    view.spinOnce(100);
-    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-  }
-*/
-
-
+    while (!view.wasStopped()) {
+      view.spinOnce(100);
+      boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    }
+  */
 }

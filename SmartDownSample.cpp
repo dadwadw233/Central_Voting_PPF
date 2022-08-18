@@ -15,10 +15,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  if(isSetRadius){
+  if (isSetRadius) {
     normal_estimation_filter.setRadiusSearch(normal_estimation_search_radius);
-  }
-  else{
+  } else {
     normal_estimation_filter.setKSearch(normal_estimation_search_k_points);
   }
   normal_estimation_filter.compute(*normal);
@@ -183,9 +182,9 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
       //每个点到searchPoint的距离(暂时用不到)
       std::vector<float> distance;
 
-      if(isSetPoints){
-        tree->nearestKSearch(searchPoint, map.size()-1, indices, distance);
-      }else{
+      if (isSetPoints) {
+        tree->nearestKSearch(searchPoint, map.size() - 1, indices, distance);
+      } else {
         tree->radiusSearch(searchPoint, radius, indices, distance);
       }
 

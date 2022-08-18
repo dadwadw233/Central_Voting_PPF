@@ -1,7 +1,7 @@
 #include <pcl/console/parse.h>
 #include "CentralVoting.h"
-#include "pcl/io/pcd_io.h"
 #include "add_gauss_noise.h"
+#include "pcl/io/pcd_io.h"
 int main(int argc, char** argv) {
   if (argc <= 1) {
     PCL_ERROR("Syntax: ./central_voting pcd_model_list pcd_scene(optional)\n");
@@ -21,33 +21,30 @@ int main(int argc, char** argv) {
   reader.read(argv[1], *model);
   reader.read(argv[2], *scene);
   std::cout << argv[1] << " " << argv[2] << std::endl;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr mix(
-      new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::PointCloud<pcl::PointXYZ>::Ptr mix(new pcl::PointCloud<pcl::PointXYZ>());
   Eigen::Matrix4f T;
-  T<<1,0,0,115,
-      0,1,0,88,
-      0,0,1,0,
-      0,0,0,1;
+  T << 1, 0, 0, 115, 0, 1, 0, 88, 0, 0, 1, 0, 0, 0, 0, 1;
   Eigen::Affine3f T_(T);
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_(
       new pcl::PointCloud<pcl::PointXYZ>());
-  pcl::transformPointCloud(*model, *model_,T_);
-  *mix = *scene+*model_;
-    AddGaussNoise agn;							//创建高斯噪声对象agn
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(
-        new pcl::PointCloud<pcl::PointXYZ>());;	//保存结果的点云
-    agn.setInputCloud(*scene);				//设置输入点云
-    agn.setParameters(0,1);						//设置高斯噪声参数mu,sigma
-    agn.addGaussNoise(*cloud_out);
-    std::cout<<"scene size: "<<cloud_out->points.size()<<std::endl;
+  pcl::transformPointCloud(*model, *model_, T_);
+  *mix = *scene + *model_;
+  AddGaussNoise agn;  //创建高斯噪声对象agn
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out(
+      new pcl::PointCloud<pcl::PointXYZ>());
+  ;                           //保存结果的点云
+  agn.setInputCloud(*scene);  //设置输入点云
+  agn.setParameters(0, 1);    //设置高斯噪声参数mu,sigma
+  agn.addGaussNoise(*cloud_out);
+  std::cout << "scene size: " << cloud_out->points.size() << std::endl;
   CentralVoting handle(mix, model);
   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(16.0f);
   handle.setDownSampleStep(16.0f);
   handle.setAngleThreshold(20);
   handle.setSimpleDownSampleLeaf(Eigen::Vector4f(15.0f, 15.0f, 15.0f, 0.0f));
-  handle.setAdaptiveDownSampleOption(false, 20000,4.0f);
-  //handle.test();
+  handle.setAdaptiveDownSampleOption(false, 20000, 4.0f);
+  // handle.test();
   handle.Solve();
   return 0;
 }

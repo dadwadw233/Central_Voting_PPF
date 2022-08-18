@@ -43,7 +43,6 @@ class PPFRegistration {
 
   void setModelTripleSet(const std::vector<pcl::PointXYZ> &triple_set);
 
-
   void establishVoxelGrid();
 
   PPFRegistration &operator=(const PPFRegistration &) = delete;
@@ -62,7 +61,7 @@ class PPFRegistration {
     int index_c;
     int index_aux_1;
     int index_aux_2;
-    key_(int center, int first_aux, int second_aux){
+    key_(int center, int first_aux, int second_aux) {
       index_c = center;
       index_aux_1 = first_aux;
       index_aux_2 = second_aux;
@@ -72,15 +71,17 @@ class PPFRegistration {
              index_aux_2 == k.index_aux_2;
     }
   };
-  struct data{
+  struct data {
     Eigen::Affine3f T;
     int value;
-    data(const Eigen::Affine3f &T_, const int &value_):T(T_), value(value_){}
+    data(const Eigen::Affine3f &T_, const int &value_) : T(T_), value(value_) {}
   };
-  struct cmp{
-    bool operator()(data a, data b){
-      if(a.value == b.value) return a.value<=b.value;
-      else return a.value<b.value;
+  struct cmp {
+    bool operator()(data a, data b) {
+      if (a.value == b.value)
+        return a.value <= b.value;
+      else
+        return a.value < b.value;
     }
   };
   void vote(const key_ &key, const Eigen::Affine3f &T);
@@ -94,16 +95,13 @@ class PPFRegistration {
   template <class T>
   float calculateDistance(T &pointA, T &pointB);
 
-  decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set){
+  decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set) {
     Eigen::Matrix4f temp;
-    temp<<0,0,0,0,
-        0,0,0,0,
-        0,0,0,0,
-        0,0,0,0;
-    for(auto i:T_set){
-      temp+=i.matrix();
+    temp << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    for (auto i : T_set) {
+      temp += i.matrix();
     }
-    temp/=T_set.size();
+    temp /= T_set.size();
     return temp;
   }
   float scene_reference_point_sampling_rate{};
@@ -132,8 +130,8 @@ class PPFRegistration {
     }
   };
   std::unordered_map<key_, data_, hash_cal> map_;
-  std::unordered_map<int, data_>map_center;
-  std::priority_queue<data, std::vector<data>, cmp>T_queue;
+  std::unordered_map<int, data_> map_center;
+  std::priority_queue<data, std::vector<data>, cmp> T_queue;
 };
 
 #endif  // CENTRAL_VOTING_PPFREGISTRATION_H

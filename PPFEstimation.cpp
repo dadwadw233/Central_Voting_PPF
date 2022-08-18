@@ -55,14 +55,14 @@ void PPFEstimation::compute(
               input_point_normal->points[j].normal_y,
               input_point_normal->points[j].normal_z;
           // std::cout<<input_point_normal->points[j]<<std::endl;
-          delta = p2 - p1;//pt-pr
+          delta = p2 - p1;  // pt-pr
           float f4 = delta.norm();
-/*
-          if(f4<250)
-          {
-            continue;
-          }*/
-          //std::cout<<f4<<std::endl;
+          /*
+                    if(f4<250)
+                    {
+                      continue;
+                    }*/
+          // std::cout<<f4<<std::endl;
           // normalize
           delta /= f4;
 
@@ -85,13 +85,17 @@ void PPFEstimation::compute(
           feature.f3 = f3;
           feature.f4 = f4;
           feature.alpha_m = 0.0f;
-          data.second.Or =
-              (std::make_pair(n1.cross(delta)/(n1.cross(delta)).norm(),
-                              std::make_pair(n1.cross(n1.cross(delta))/(n1.cross(n1.cross(delta))).norm(), n1/n1.norm())));
+          data.second.Or = (std::make_pair(
+              n1.cross(delta) / (n1.cross(delta)).norm(),
+              std::make_pair(n1.cross(n1.cross(delta)) /
+                                 (n1.cross(n1.cross(delta))).norm(),
+                             n1 / n1.norm())));
 
-          data.second.Ot =
-              (std::make_pair(n2.cross(delta)/(n2.cross(delta)).norm(),
-                              std::make_pair(n2.cross(n2.cross(delta))/(n2.cross(n2.cross(delta))).norm(), n2/n2.norm())));
+          data.second.Ot = (std::make_pair(
+              n2.cross(delta) / (n2.cross(delta)).norm(),
+              std::make_pair(n2.cross(n2.cross(delta)) /
+                                 (n2.cross(n2.cross(delta))).norm(),
+                             n2 / n2.norm())));
 
           data.first.k1 =
               static_cast<int>(std::floor(f1 / angle_discretization_step));
