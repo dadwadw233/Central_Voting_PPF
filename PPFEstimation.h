@@ -14,7 +14,7 @@ class PPFEstimation {
   PPFEstimation();
   void compute(const pcl::PointCloud<pcl::PointNormal>::Ptr &input_point_normal,
                pcl::PointCloud<pcl::PPFSignature>::Ptr &output_cloud,
-               Hash::Ptr &hash_map);
+               Hash::HashMap::Ptr &hash_map);
 
   void setDiscretizationSteps(const float &angle_discretization_step,
                               const float &distance_discretization_step);

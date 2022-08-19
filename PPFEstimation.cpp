@@ -7,7 +7,7 @@
 void PPFEstimation::compute(
     const pcl::PointCloud<pcl::PointNormal>::Ptr &input_point_normal,
     pcl::PointCloud<pcl::PPFSignature>::Ptr &output_cloud,
-    Hash::Ptr &hash_map) {
+    Hash::HashMap::Ptr &hash_map) {
   /*std::shared_ptr<pcl::PPFSignature> feature =
   std::make_shared<pcl::PPFSignature>(); std::shared_ptr<Hash::HashData>data =
   std::make_shared<Hash::HashData>(); std::shared_ptr<Hash::HashKey>key =

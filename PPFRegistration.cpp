@@ -32,7 +32,7 @@ void PPFRegistration::setInputSource(
     const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
   this->model_cloud_with_normal = cloud;
 }
-void PPFRegistration::setSearchMap(const Hash::Ptr &searchMap) {
+void PPFRegistration::setSearchMap(const Hash::HashMap::Ptr &searchMap) {
   this->searchMap = searchMap;
 }
 void PPFRegistration::setDiscretizationSteps(
@@ -304,153 +304,161 @@ void PPFRegistration::compute() {
         data.second.t = scene_cloud_with_normal->points[j];
         if (searchMap->find(data.first)) {
           auto model_lrf = this->searchMap->getData(data.first);
-          Eigen::Matrix3f model_lrf_Or;
-          Eigen::Matrix3f model_lrf_Ot;
-          Eigen::Matrix3f scene_lrf_Or;
-          Eigen::Matrix3f scene_lrf_Ot;
+          auto same_k = this->searchMap->getSameKeyNum(data.first);
 
-          model_lrf_Or << model_lrf.Or.first[0], model_lrf.Or.second.first[0],
-              model_lrf.Or.second.second[0], model_lrf.Or.first[1],
-              model_lrf.Or.second.first[1], model_lrf.Or.second.second[1],
-              model_lrf.Or.first[2], model_lrf.Or.second.first[2],
-              model_lrf.Or.second.second[2];
-          model_lrf_Ot << model_lrf.Ot.first[0], model_lrf.Ot.second.first[0],
-              model_lrf.Ot.second.second[0], model_lrf.Ot.first[1],
-              model_lrf.Ot.second.first[1], model_lrf.Ot.second.second[1],
-              model_lrf.Ot.first[2], model_lrf.Ot.second.first[2],
-              model_lrf.Ot.second.second[2];
-          scene_lrf_Or << data.second.Or.first[0],
-              data.second.Or.second.first[0], data.second.Or.second.second[0],
-              data.second.Or.first[1], data.second.Or.second.first[1],
-              data.second.Or.second.second[1], data.second.Or.first[2],
-              data.second.Or.second.first[2], data.second.Or.second.second[2];
-          scene_lrf_Ot << data.second.Ot.first[0],
-              data.second.Ot.second.first[0], data.second.Ot.second.second[0],
-              data.second.Ot.first[1], data.second.Ot.second.first[1],
-              data.second.Ot.second.second[1], data.second.Ot.first[2],
-              data.second.Ot.second.first[2], data.second.Ot.second.second[2];
-          // Eigen::Matrix4f{data.second.Or * model_lrf.Or};
 
-          Eigen::Matrix3f R_1{scene_lrf_Or.transpose() * model_lrf_Or};
-          Eigen::Matrix3f R_2{scene_lrf_Ot.transpose() * model_lrf_Ot};
+          for(size_t i = 0;i<same_k;++i){
+            Eigen::Matrix3f model_lrf_Or;
+            Eigen::Matrix3f model_lrf_Ot;
+            Eigen::Matrix3f scene_lrf_Or;
+            Eigen::Matrix3f scene_lrf_Ot;
 
-          Eigen::Vector4f t_1{};
-          Eigen::Vector4f t_2{};
-          Eigen::Vector3f m_1{model_lrf.r.x, model_lrf.r.y, model_lrf.r.z};
-          Eigen::Vector3f m_2{model_lrf.t.x, model_lrf.t.y, model_lrf.t.z};
+            model_lrf_Or << model_lrf->second.Or.first[0], model_lrf->second.Or.second.first[0],
+                model_lrf->second.Or.second.second[0], model_lrf->second.Or.first[1],
+                model_lrf->second.Or.second.first[1], model_lrf->second.Or.second.second[1],
+                model_lrf->second.Or.first[2], model_lrf->second.Or.second.first[2],
+                model_lrf->second.Or.second.second[2];
+            model_lrf_Ot << model_lrf->second.Ot.first[0], model_lrf->second.Ot.second.first[0],
+                model_lrf->second.Ot.second.second[0], model_lrf->second.Ot.first[1],
+                model_lrf->second.Ot.second.first[1], model_lrf->second.Ot.second.second[1],
+                model_lrf->second.Ot.first[2], model_lrf->second.Ot.second.first[2],
+                model_lrf->second.Ot.second.second[2];
+            scene_lrf_Or << data.second.Or.first[0],
+                data.second.Or.second.first[0], data.second.Or.second.second[0],
+                data.second.Or.first[1], data.second.Or.second.first[1],
+                data.second.Or.second.second[1], data.second.Or.first[2],
+                data.second.Or.second.first[2], data.second.Or.second.second[2];
+            scene_lrf_Ot << data.second.Ot.first[0],
+                data.second.Ot.second.first[0], data.second.Ot.second.second[0],
+                data.second.Ot.first[1], data.second.Ot.second.first[1],
+                data.second.Ot.second.second[1], data.second.Ot.first[2],
+                data.second.Ot.second.first[2], data.second.Ot.second.second[2];
+            // Eigen::Matrix4f{data.second.Or * model_lrf.Or};
 
-          m_1 = R_1 * m_1;
-          m_2 = R_1 * m_2;
+            Eigen::Matrix3f R_1{scene_lrf_Or.transpose() * model_lrf_Or};
+            Eigen::Matrix3f R_2{scene_lrf_Ot.transpose() * model_lrf_Ot};
 
-          t_1 << data.second.r.x - m_1[0], data.second.r.y - m_1[1],
-              data.second.r.z - m_1[2], 1.0f;
-          t_2 << data.second.t.x - m_2[0], data.second.t.y - m_2[1],
-              data.second.t.z - m_2[2], 1.0f;
-          // std::cout<<R_1<<std::endl;
+            Eigen::Vector4f t_1{};
+            Eigen::Vector4f t_2{};
+            Eigen::Vector3f m_1{model_lrf->second.r.x, model_lrf->second.r.y, model_lrf->second.r.z};
+            Eigen::Vector3f m_2{model_lrf->second.t.x, model_lrf->second.t.y, model_lrf->second.t.z};
 
-          Eigen::Matrix4f T_1{};
-          Eigen::Matrix4f T_2{};
+            m_1 = R_1 * m_1;
+            m_2 = R_1 * m_2;
 
-          T_1 << R_1(0, 0), R_1(0, 1), R_1(0, 2), t_1[0], R_1(1, 0), R_1(1, 1),
-              R_1(1, 2), t_1[1], R_1(2, 0), R_1(2, 1), R_1(2, 2), t_1[2], 0.0f,
-              0.0f, 0.0f, t_1[3];
-          T_2 << R_2(0, 0), R_2(0, 1), R_2(0, 2), t_2[0], R_2(1, 0), R_2(1, 1),
-              R_2(1, 2), t_2[1], R_2(2, 0), R_2(2, 1), R_2(2, 2), t_2[2], 0.0f,
-              0.0f, 0.0f, t_1[3];
+            t_1 << data.second.r.x - m_1[0], data.second.r.y - m_1[1],
+                data.second.r.z - m_1[2], 1.0f;
+            t_2 << data.second.t.x - m_2[0], data.second.t.y - m_2[1],
+                data.second.t.z - m_2[2], 1.0f;
+            // std::cout<<R_1<<std::endl;
 
-          pcl::PointXYZ p;
-          Eigen::Affine3f transform_1(T_1);
-          Eigen::Affine3f transform_2(T_2);
-          Eigen::Vector3f model_center{};
-          Eigen::Vector3f hypo_center{};
-          Eigen::Vector3f hypo_center_{};
-          model_center << triple_set[0].x, triple_set[0].y, triple_set[0].z;
-          pcl::transformPoint(model_center, hypo_center, transform_1);
-          pcl::transformPoint(model_center, hypo_center_, transform_2);
-          if (::calculateDistance(hypo_center, hypo_center_) > 100) {
-            continue;
-          }
-          std::vector<int> index_1, index_2;
-          for (int i = 0; i < 3; i++) {
-            Eigen::Vector3f m{};
-            Eigen::Vector3f s{};
-            m << triple_set[i].x, triple_set[i].y, triple_set[i].z;
-            s << 0.0f, 0.0f, 0.0f;
-            pcl::transformPoint(m, s, transform_1);
-            /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
-              break;
-            }*/
-            int xCell = static_cast<int>(
-                            std::ceil((s[0] - this->x_range.first) /
-                                      clustering_position_diff_threshold)) == 0
-                            ? 1
-                            : static_cast<int>(std::ceil(
-                                  (s[0] - this->x_range.first) /
-                                  clustering_position_diff_threshold));
-            int yCell = static_cast<int>(
-                            std::ceil((s[1] - this->y_range.first) /
-                                      clustering_position_diff_threshold)) == 0
-                            ? 1
-                            : static_cast<int>(std::ceil(
-                                  (s[1] - this->y_range.first) /
-                                  clustering_position_diff_threshold));
-            int zCell = static_cast<int>(
-                            std::ceil((s[2] - this->z_range.first) /
-                                      clustering_position_diff_threshold)) == 0
-                            ? 1
-                            : static_cast<int>(std::ceil(
-                                  (s[2] - this->z_range.first) /
-                                  clustering_position_diff_threshold));
-            if (i == 0) {
-#pragma omp critical
-              triple_scene->points.emplace_back(s[0], s[1], s[2]);
+            Eigen::Matrix4f T_1{};
+            Eigen::Matrix4f T_2{};
+
+            T_1 << R_1(0, 0), R_1(0, 1), R_1(0, 2), t_1[0], R_1(1, 0), R_1(1, 1),
+                R_1(1, 2), t_1[1], R_1(2, 0), R_1(2, 1), R_1(2, 2), t_1[2], 0.0f,
+                0.0f, 0.0f, t_1[3];
+            T_2 << R_2(0, 0), R_2(0, 1), R_2(0, 2), t_2[0], R_2(1, 0), R_2(1, 1),
+                R_2(1, 2), t_2[1], R_2(2, 0), R_2(2, 1), R_2(2, 2), t_2[2], 0.0f,
+                0.0f, 0.0f, t_1[3];
+
+            pcl::PointXYZ p;
+            Eigen::Affine3f transform_1(T_1);
+            Eigen::Affine3f transform_2(T_2);
+            Eigen::Vector3f model_center{};
+            Eigen::Vector3f hypo_center{};
+            Eigen::Vector3f hypo_center_{};
+            model_center << triple_set[0].x, triple_set[0].y, triple_set[0].z;
+            pcl::transformPoint(model_center, hypo_center, transform_1);
+            pcl::transformPoint(model_center, hypo_center_, transform_2);
+            if (::calculateDistance(hypo_center, hypo_center_) > 100) {
+              continue;
             }
-
-            index_1.push_back((xCell - 1) + (yCell - 1) * x_num +
-                              (zCell - 1) * x_num * y_num);
-            pcl::transformPoint(m, s, transform_2);
-            /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
-              break;
-            }*/
-            xCell = static_cast<int>(
-                        std::ceil((s[0] - this->x_range.first) /
-                                  clustering_position_diff_threshold)) == 0
-                        ? 1
-                        : static_cast<int>(
+            std::vector<int> index_1, index_2;
+            for (int i = 0; i < 3; i++) {
+              Eigen::Vector3f m{};
+              Eigen::Vector3f s{};
+              m << triple_set[i].x, triple_set[i].y, triple_set[i].z;
+              s << 0.0f, 0.0f, 0.0f;
+              pcl::transformPoint(m, s, transform_1);
+              /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
+                break;
+              }*/
+              int xCell = static_cast<int>(
                               std::ceil((s[0] - this->x_range.first) /
-                                        clustering_position_diff_threshold));
-            yCell = static_cast<int>(
-                        std::ceil((s[1] - this->y_range.first) /
-                                  clustering_position_diff_threshold)) == 0
-                        ? 1
-                        : static_cast<int>(
+                                        clustering_position_diff_threshold)) == 0
+                              ? 1
+                              : static_cast<int>(std::ceil(
+                                    (s[0] - this->x_range.first) /
+                                    clustering_position_diff_threshold));
+              int yCell = static_cast<int>(
                               std::ceil((s[1] - this->y_range.first) /
-                                        clustering_position_diff_threshold));
-            zCell = static_cast<int>(
-                        std::ceil((s[2] - this->z_range.first) /
-                                  clustering_position_diff_threshold)) == 0
-                        ? 1
-                        : static_cast<int>(
+                                        clustering_position_diff_threshold)) == 0
+                              ? 1
+                              : static_cast<int>(std::ceil(
+                                    (s[1] - this->y_range.first) /
+                                    clustering_position_diff_threshold));
+              int zCell = static_cast<int>(
                               std::ceil((s[2] - this->z_range.first) /
-                                        clustering_position_diff_threshold));
-            if (i == 0) {
+                                        clustering_position_diff_threshold)) == 0
+                              ? 1
+                              : static_cast<int>(std::ceil(
+                                    (s[2] - this->z_range.first) /
+                                    clustering_position_diff_threshold));
+              if (i == 0) {
 #pragma omp critical
-              triple_scene->points.emplace_back(s[0], s[1], s[2]);
+                triple_scene->points.emplace_back(s[0], s[1], s[2]);
+              }
+
+              index_1.push_back((xCell - 1) + (yCell - 1) * x_num +
+                                (zCell - 1) * x_num * y_num);
+              pcl::transformPoint(m, s, transform_2);
+              /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
+                break;
+              }*/
+              xCell = static_cast<int>(
+                          std::ceil((s[0] - this->x_range.first) /
+                                    clustering_position_diff_threshold)) == 0
+                          ? 1
+                          : static_cast<int>(
+                                std::ceil((s[0] - this->x_range.first) /
+                                          clustering_position_diff_threshold));
+              yCell = static_cast<int>(
+                          std::ceil((s[1] - this->y_range.first) /
+                                    clustering_position_diff_threshold)) == 0
+                          ? 1
+                          : static_cast<int>(
+                                std::ceil((s[1] - this->y_range.first) /
+                                          clustering_position_diff_threshold));
+              zCell = static_cast<int>(
+                          std::ceil((s[2] - this->z_range.first) /
+                                    clustering_position_diff_threshold)) == 0
+                          ? 1
+                          : static_cast<int>(
+                                std::ceil((s[2] - this->z_range.first) /
+                                          clustering_position_diff_threshold));
+              if (i == 0) {
+#pragma omp critical
+                triple_scene->points.emplace_back(s[0], s[1], s[2]);
+              }
+
+              index_2.push_back((xCell - 1) + (yCell - 1) * x_num +
+                                (zCell - 1) * x_num * y_num);
             }
 
-            index_2.push_back((xCell - 1) + (yCell - 1) * x_num +
-                              (zCell - 1) * x_num * y_num);
+            key_ key_1(index_1[0], index_1[1], index_1[2]);
+            key_ key_2(index_2[0], index_2[1], index_2[2]);
+            // if(fabs(index_1[0]-index_2[0])>10){
+            //  continue;
+            //}
+#pragma omp critical
+            this->vote(key_1, transform_1);
+#pragma omp critical
+            this->vote(key_2, transform_2);
+
+            model_lrf++;
           }
 
-          key_ key_1(index_1[0], index_1[1], index_1[2]);
-          key_ key_2(index_2[0], index_2[1], index_2[2]);
-          // if(fabs(index_1[0]-index_2[0])>10){
-          //  continue;
-          //}
-#pragma omp critical
-          this->vote(key_1, transform_1);
-#pragma omp critical
-          this->vote(key_2, transform_2);
         } else {
           continue;
         }

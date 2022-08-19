@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   agn.setParameters(0, 1);    //设置高斯噪声参数mu,sigma
   agn.addGaussNoise(*cloud_out);
   std::cout << "scene size: " << cloud_out->points.size() << std::endl;
-  CentralVoting handle(mix, model);
+  CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(16.0f);
   handle.setDownSampleStep(16.0f);

@@ -30,7 +30,7 @@ class PPFRegistration {
   void setRotationClusteringThreshold(
       const float &clustering_rotation_diff_threshold);
 
-  void setSearchMap(const Hash::Ptr &searchMap);
+  void setSearchMap(const Hash::HashMap::Ptr &searchMap);
 
   void setInputSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 
@@ -113,7 +113,7 @@ class PPFRegistration {
   pcl::PointCloud<pcl::PointNormal>::Ptr model_cloud_with_normal;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Affine3f finalTransformation;
-  Hash::Ptr searchMap;
+  Hash::HashMap::Ptr searchMap;
   std::vector<pcl::PointXYZ> triple_set;
   float angle_discretization_step;
   float distance_discretization_step;
