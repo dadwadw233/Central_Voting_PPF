@@ -531,7 +531,7 @@ void PPFRegistration::compute() {
   }
 
   /*visualize*/
-  /*
+/*
     std::cout << "\ntriple size: " << temp->size() << std::endl;
     std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
@@ -540,7 +540,7 @@ void PPFRegistration::compute() {
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
         triple, 255, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
-        scene_cloud_with_normal, 255, 255, 255);
+        scene_cloud_with_normal, 255, 0, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
         model_cloud_with_normal, 0, 255, 0);
     view.addPointCloud(triple, red, "triple");
@@ -548,10 +548,15 @@ void PPFRegistration::compute() {
     view.setPointCloudRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
     view.addPointCloud(scene_cloud_with_normal, white, "scene");
+    view.setBackgroundColor(0, 0, 0);
+    view.addPointCloudNormals<pcl::PointNormal>(model_cloud_with_normal, 1, 5,
+                                                "model with normal");
 
+    view.addPointCloudNormals<pcl::PointNormal>(scene_cloud_with_normal, 1, 5,
+                                                "scene with normals");
     while (!view.wasStopped()) {
       view.spinOnce(100);
       boost::this_thread::sleep(boost::posix_time::microseconds(1000));
     }
-  */
+*/
 }

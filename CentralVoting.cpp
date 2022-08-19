@@ -121,7 +121,7 @@ void CentralVoting::Solve() {
   // this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200,
   // center[1], center[2], false);
   this->scene_subsampled = subsampleAndCalculateNormals(
-      scene, Eigen::Vector4f(10.0f, 10.0f, 10.0f, 0.0f));
+      scene, Eigen::Vector4f(7.0f, 7.0f, 7.0f, 0.0f));
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::cout << center << std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
@@ -130,10 +130,10 @@ void CentralVoting::Solve() {
     // auto model_cloud = SimpleDownSample(model_set[i]);
     // pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
     // DownSample(model_cloud);
-    // pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-    // subsampleAndCalculateNormals(model_set[i]);
-    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-        subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
+     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+     subsampleAndCalculateNormals(model_set[i]);
+    //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+      //  subsampleAndCalculateNormals(model_set[i], this->triple_set[i], false);
     cloud_models_with_normal.push_back(model_with_normal);
     /**
      * 可视化法线
@@ -180,7 +180,7 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(3);  //投票的体素网格的size
+    ppf_registration.setPositionClusteringThreshold(12);  //投票的体素网格的size
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);

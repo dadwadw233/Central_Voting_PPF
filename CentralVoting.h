@@ -134,6 +134,6 @@ class CentralVoting {
   bool isAdaptiveDownSample = false;
   int downSampleTarget = 2000;
   float adaptive_step = 0.0f;
-  int k_point = 10;
+  int k_point = 20;
 };
 #endif  // CENTRAL_VOTING_CENTRALVOTING_H

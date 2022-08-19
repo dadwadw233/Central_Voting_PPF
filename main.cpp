@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   handle.setNormalEstimationRadius(16.0f);
   handle.setDownSampleStep(16.0f);
   handle.setAngleThreshold(20);
-  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(15.0f, 15.0f, 15.0f, 0.0f));
+  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000, 4.0f);
   // handle.test();
   handle.Solve();
