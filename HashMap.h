@@ -40,6 +40,7 @@
 #include "pcl/registration/registration.h"
 #include "pcl/visualization/cloud_viewer.h"
 namespace Hash {
+
 struct HashData {
   std::pair<Eigen::Vector3f, std::pair<Eigen::Vector3f, Eigen::Vector3f>> Or;
   std::pair<Eigen::Vector3f, std::pair<Eigen::Vector3f, Eigen::Vector3f>> Ot;
@@ -55,36 +56,42 @@ struct HashKey {
     return k1 == k.k1 && k2 == k.k2 && k3 == k.k3 && k4 == k.k4;
   }
 };
-
+struct hash_cal {
+  size_t operator()(Hash::HashKey k) const {
+    return std::hash<int>()(k.k1) ^ (std::hash<int>()(k.k2) << 1) ^
+           (std::hash<int>()(k.k3) << 2) ^ (std::hash<int>()(k.k4) << 3) ^
+           (std::hash<int>()(k.k1) << 4) ^ (std::hash<int>()(k.k2) << 5) ^
+           (std::hash<int>()(k.k3) << 5) ^ (std::hash<int>()(k.k4) << 6);
+    // return std::hash<int>()(k.k1);
+  }
+};
 class HashMap {
  public:
+  typedef boost::shared_ptr<Hash::HashMap> Ptr;
+  typedef std::unordered_multimap<HashKey, HashData, hash_cal>::iterator iterator;
   bool addInfo(Hash::HashKey &key, Hash::HashData &data);
 
   bool addInfo(std::pair<Hash::HashKey, Hash::HashData> &data);
 
-  HashData getData(Hash::HashKey &key);
+  decltype(auto) getData(Hash::HashKey &key) {
+    return (this->map.find(key));
+  }
+  decltype(auto) begin() { return this->map.begin(); }
+
+  decltype(auto) getSameKeyNum(Hash::HashKey &key) {
+    return this->map.count(key);
+  }
 
   bool find(Hash::HashKey &key);
 
-  decltype(auto) begin();
 
-  bool empty();
-
-  HashMap() {}
+  bool empty() { return this->map.empty(); }
 
  private:
-  struct hash_cal {
-    size_t operator()(const HashKey &k) const {
-      return std::hash<int>()(k.k1) ^ (std::hash<int>()(k.k2) << 1) ^
-             (std::hash<int>()(k.k3) << 2) ^ (std::hash<int>()(k.k4) << 3) ^
-             (std::hash<int>()(k.k1) << 4) ^ (std::hash<int>()(k.k2) << 5) ^
-             (std::hash<int>()(k.k3) << 5) ^ (std::hash<int>()(k.k4) << 6);
-      // return std::hash<int>()(k.k1);
-    }
-  };
   std::unordered_multimap<HashKey, HashData, hash_cal> map;
 };
-typedef boost::shared_ptr<Hash::HashMap> Ptr;
 
-}  // namespace Hash
+
+
+};  // namespace Hash
 #endif  // CENTRAL_VOTING_HASHMAP_H

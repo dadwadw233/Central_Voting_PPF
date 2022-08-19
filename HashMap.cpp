@@ -24,10 +24,6 @@ bool HashMap::addInfo(std::pair<Hash::HashKey, Hash::HashData> &data) {
   }
 }
 
-HashData HashMap::getData(Hash::HashKey &key) {
-  return (*this->map.find(key)).second;
-}
-
 bool HashMap::find(Hash::HashKey &key) {
   if (map.find(key) != map.end()) {
     return true;
@@ -36,7 +32,7 @@ bool HashMap::find(Hash::HashKey &key) {
   }
 }
 
-bool HashMap::empty() { return this->map.empty(); }
 
-decltype(auto) HashMap::begin() { return this->map.begin(); }
+
+
 }  // namespace Hash
