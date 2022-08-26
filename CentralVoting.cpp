@@ -100,21 +100,40 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
                                 std::make_pair(min_point.y, max_point.y),
                                 std::make_pair(min_point.z, max_point.z),
                                 this->step, this->AngleThreshold, 0.01);
-  sample_filter.setIsdense(true);
+  sample_filter.setIsdense(false);
   // sample_filter.setRadius(this->normalEstimationRadius);
+
   sample_filter.setKSearch(this->k_point);
   return sample_filter.compute();
 }
+pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
+    const std::vector<pcl::PointXYZ> &view_point, const bool &reverse) const {
+  pcl::PointXYZ max_point, min_point;
+  GenerateBound(input_cloud, max_point, min_point);
+  SmartDownSample sample_filter(input_cloud,
+                                std::make_pair(min_point.x, max_point.x),
+                                std::make_pair(min_point.y, max_point.y),
+                                std::make_pair(min_point.z, max_point.z),
+                                this->step, this->AngleThreshold, 0.01);
+  sample_filter.setIsdense(false);
+  sample_filter.setViewPoint(Eigen::Vector3f(view_point[0].x, view_point[0].y, view_point[0].z));
+  sample_filter.setReverse(true);
+  // sample_filter.setRadius(this->normalEstimationRadius);
 
+  sample_filter.setKSearch(this->k_point);
+  return sample_filter.compute();
+}
 void CentralVoting::Solve() {
-  /*pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud =
+  /*
+  pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud =
   boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   if(this->isAdaptiveDownSample){
     scene_cloud = adaptiveDownSample(scene);
   }else{
     scene_cloud = SimpleDownSample(scene);
-  }*/
-  // this->scene_subsampled = DownSample(scene_cloud);
+  }
+   this->scene_subsampled = DownSample(scene_cloud);*/
   // this->scene_subsampled = subsampleAndCalculateNormals(scene);
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*scene, center);
@@ -122,14 +141,15 @@ void CentralVoting::Solve() {
   // center[1], center[2], false);
   this->scene_subsampled = subsampleAndCalculateNormals(
       scene, Eigen::Vector4f(7.0f, 7.0f, 7.0f, 0.0f));
+
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::cout << center << std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::HashMap::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
-    // auto model_cloud = SimpleDownSample(model_set[i]);
-    // pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-    // DownSample(model_cloud);
+    //auto model_cloud = SimpleDownSample(model_set[i]);
+    //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+    //DownSample(model_cloud, this->triple_set[i], true);
      //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
      //subsampleAndCalculateNormals(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
@@ -485,7 +505,7 @@ CentralVoting::subsampleAndCalculateNormals(
   // normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
   if (reverse) {
-    for (auto i : *cloud_subsampled_normals) {
+    for (auto &i : *cloud_subsampled_normals) {
       i.normal_x = -i.normal_x;
       i.normal_y = -i.normal_y;
       i.normal_z = -i.normal_z;
@@ -507,3 +527,4 @@ CentralVoting::subsampleAndCalculateNormals(
            static_cast<std::size_t>(cloud_subsampled->size()));
   return cloud_subsampled_with_normals;
 }
+

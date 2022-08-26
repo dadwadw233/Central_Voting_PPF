@@ -39,10 +39,10 @@ int main(int argc, char** argv) {
   std::cout << "scene size: " << cloud_out->points.size() << std::endl;
   CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
-  handle.setNormalEstimationRadius(16.0f);
-  handle.setDownSampleStep(16.0f);
-  handle.setAngleThreshold(20);
-  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
+  handle.setNormalEstimationRadius(4.0f);
+  handle.setDownSampleStep(10.0f);
+  handle.setAngleThreshold(35);
+  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(6.0f, 6.0f, 6.0f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000, 4.0f);
   // handle.test();
   handle.Solve();

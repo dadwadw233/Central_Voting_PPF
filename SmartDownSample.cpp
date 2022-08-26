@@ -15,13 +15,27 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
+  if(isSetViewPoint){
+    normal_estimation_filter.setViewPoint(view_point[0], view_point[1], view_point[2]);
+  }
+
   if (isSetRadius) {
     normal_estimation_filter.setRadiusSearch(normal_estimation_search_radius);
   } else {
     normal_estimation_filter.setKSearch(normal_estimation_search_k_points);
   }
   normal_estimation_filter.compute(*normal);
-
+  if (reverse) {
+    for (auto &i : *normal) {
+      i.normal_x = -i.normal_x;
+      i.normal_y = -i.normal_y;
+      i.normal_z = -i.normal_z;
+      i.normal[0] = i.normal_x;
+      i.normal[1] = i.normal_y;
+      i.normal[2] = i.normal_z;
+      i.curvature = -i.curvature;
+    }
+  }
   pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(
       new pcl::PointCloud<pcl::PointNormal>());
   concatenateFields(*this->input_cloud, *normal, *cloud_with_normals);

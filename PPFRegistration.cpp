@@ -3,6 +3,7 @@
 //
 
 #include "PPFRegistration.h"
+#include <string>
 
 PPFRegistration::PPFRegistration() {
   model_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
@@ -163,7 +164,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
       cnt += 0;
       continue;
     } else {
-      int num = 0;
+      int num = indices.size();
       for (auto j = 0; j < indices.size(); ++j) {
         if (pcl::getAngle3D(
                 static_cast<const Eigen::Vector3f>(
@@ -171,17 +172,17 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
                 static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
                 true) < 25) {
           num++;
-          break;
         } else {
+          num--;
           continue;
         }
       }
       if (num > 0) {
 #pragma omp critical
-        cnt++;
+        cnt+=num;
       } else {
 #pragma omp critical
-        cnt += 0;
+        cnt --;
       }
     }
   }
@@ -507,7 +508,7 @@ void PPFRegistration::compute() {
 
       Eigen::Affine3f temp_(T_mean);
       // std::cout<<temp.matrix()<<std::endl;
-      struct data node(temp_, cnt + i.second.value);
+      struct data node(temp_, cnt+i.second.value);
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
@@ -524,6 +525,28 @@ void PPFRegistration::compute() {
     this->finalTransformation = T_queue.top().T;
     std::cout << "transform matrix: " << std::endl
               << this->finalTransformation.matrix();
+
+    /****************/
+    pcl::visualization::PCLVisualizer view("subsampled point cloud");
+    view.setBackgroundColor(0, 0, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
+        scene_cloud_with_normal, 255, 0, 255);
+    view.addPointCloud(scene_cloud_with_normal, white, "scene");
+    std::string name = "result";
+    for(int i = 0;i<10;i++){
+      pcl::PointCloud<pcl::PointNormal>::Ptr result = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+      pcl::transformPointCloud(*model_cloud_with_normal, *result, T_queue.top().T);
+
+      pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
+          result, 255, 0, 0);
+      view.addPointCloud(result, red,name);
+      name+="result";
+      T_queue.pop();
+    }
+    while (!view.wasStopped()) {
+      view.spinOnce(100);
+      boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+    }
   }
 
   /**generate cluster **/

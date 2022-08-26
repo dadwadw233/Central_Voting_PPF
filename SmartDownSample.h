@@ -85,6 +85,21 @@ class SmartDownSample {
 
   void setIsdense(const bool &data);
 
+  void setViewPoint(const Eigen::Vector3f &view_point_){
+    this->view_point = view_point_;
+    isSetViewPoint = true;
+  }
+
+  void setViewPoint(const Eigen::Vector3f &&view_point_){
+    this->view_point = view_point_;
+    isSetViewPoint  = true;
+  }
+
+  void setReverse(const bool &flag){
+    this->reverse = flag;
+  }
+
+
  private:
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_cloud;
   std::pair<double, double> x_range;
@@ -93,10 +108,13 @@ class SmartDownSample {
   float step;
   float angleThreshold, distanceThreshold;
   float normal_estimation_search_radius;
+  Eigen::Vector3f view_point{};
   int normal_estimation_search_k_points;
   bool isSetRadius = false;
   bool isSetPoints = false;
   bool isdense = false;
+  bool reverse = false;
+  bool isSetViewPoint = false;
 };
 
 #endif  // CENTRAL_VOTING_SMARTDOWNSAMPLE_H

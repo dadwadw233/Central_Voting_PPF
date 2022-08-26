@@ -70,6 +70,8 @@ class CentralVoting {
 
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud) const;
+  pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud, const std::vector<pcl::PointXYZ> &view_point, const bool &reverse ) const;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr SimpleDownSample(
       pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
