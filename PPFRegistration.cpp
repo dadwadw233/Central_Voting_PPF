@@ -486,7 +486,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(20);
+  ec.setMinClusterSize(500);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -542,12 +542,12 @@ void PPFRegistration::compute() {
     pcl::visualization::PCLVisualizer view("subsampled point cloud");
     view.setBackgroundColor(0, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-        triple_scene, 255, 0, 0);
+        triple, 255, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
         scene_cloud_with_normal, 255, 0, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
         model_cloud_with_normal, 0, 255, 0);
-    view.addPointCloud(triple_scene, red, "triple");
+    view.addPointCloud(triple, red, "triple");
     view.addPointCloud(model_cloud_with_normal, green, "model");
     view.setPointCloudRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "triple");
