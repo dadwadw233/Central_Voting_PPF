@@ -121,7 +121,7 @@ void CentralVoting::Solve() {
   // this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200,
   // center[1], center[2], false);
   this->scene_subsampled = subsampleAndCalculateNormals(
-      scene, Eigen::Vector4f(7.0f, 7.0f, 7.0f, 0.0f));
+      scene, Eigen::Vector4f(15.0f, 15.0f, 15.0f, 0.0f));
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
   std::cout << center << std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;

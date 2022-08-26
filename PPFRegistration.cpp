@@ -226,7 +226,7 @@ void PPFRegistration::compute() {
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
-    scene_reference_point_sampling_rate) private(p1, p2, n1, n2, delta,       \
+    scene_reference_point_sampling_rate,cout) private(p1, p2, n1, n2, delta,       \
                                                  feature, data) default(none) \
     num_threads(15)
     for (auto j = 0; j < scene_cloud_with_normal->points.size() / 10; ++j) {
@@ -343,13 +343,14 @@ void PPFRegistration::compute() {
             Eigen::Vector3f m_1{model_lrf->second.r.x, model_lrf->second.r.y, model_lrf->second.r.z};
             Eigen::Vector3f m_2{model_lrf->second.t.x, model_lrf->second.t.y, model_lrf->second.t.z};
 
-            m_1 = R_1 * m_1;
-            m_2 = R_1 * m_2;
+            //m_1 = R_1 * m_1;
+            //m_2 = R_1 * m_2;
 
             t_1 << data.second.r.x - m_1[0], data.second.r.y - m_1[1],
                 data.second.r.z - m_1[2], 1.0f;
             t_2 << data.second.t.x - m_2[0], data.second.t.y - m_2[1],
                 data.second.t.z - m_2[2], 1.0f;
+            //std::cout<<t_1<<std::endl;
             // std::cout<<R_1<<std::endl;
 
             Eigen::Matrix4f T_1{};
@@ -380,7 +381,9 @@ void PPFRegistration::compute() {
               Eigen::Vector3f s{};
               m << triple_set[i].x, triple_set[i].y, triple_set[i].z;
               s << 0.0f, 0.0f, 0.0f;
-              pcl::transformPoint(m, s, transform_1);
+              s = m+transform_1.translation();
+              //std::cout<<"\n"<<transform_2.translation()<<std::endl;
+              //pcl::transformPoint(m, s, transform_1);
               /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
                 break;
               }*/
@@ -412,7 +415,8 @@ void PPFRegistration::compute() {
 
               index_1.push_back((xCell - 1) + (yCell - 1) * x_num +
                                 (zCell - 1) * x_num * y_num);
-              pcl::transformPoint(m, s, transform_2);
+              //pcl::transformPoint(m, s, transform_2);
+              s = m+transform_2.translation();
               /*if(isnan(s[0])|| isnan(s[1])||isnan(s[2])){
                 break;
               }*/
@@ -467,7 +471,7 @@ void PPFRegistration::compute() {
   }
 
 #pragma omp barrier
-
+/*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(
@@ -482,12 +486,12 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(2);
+  ec.setMinClusterSize(20);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
-
+*/
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if (this->map_.empty()) {
@@ -523,13 +527,13 @@ void PPFRegistration::compute() {
   }
 
   /**generate cluster **/
-
+/*
   for (auto i = cluster_indices.begin(); i != cluster_indices.end(); ++i) {
     for (auto j = 0; j < i->indices.size(); j++) {
       triple->points.push_back(temp->points[i->indices[j]]);
     }
   }
-
+*/
   /*visualize*/
 /*
     std::cout << "\ntriple size: " << temp->size() << std::endl;
@@ -538,22 +542,22 @@ void PPFRegistration::compute() {
     pcl::visualization::PCLVisualizer view("subsampled point cloud");
     view.setBackgroundColor(0, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-        triple, 255, 0, 0);
+        triple_scene, 255, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
         scene_cloud_with_normal, 255, 0, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
         model_cloud_with_normal, 0, 255, 0);
-    view.addPointCloud(triple, red, "triple");
+    view.addPointCloud(triple_scene, red, "triple");
     view.addPointCloud(model_cloud_with_normal, green, "model");
     view.setPointCloudRenderingProperties(
-        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "triple");
-    view.addPointCloud(scene_cloud_with_normal, white, "scene");
+        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "triple");
+    //view.addPointCloud(scene_cloud_with_normal, white, "scene");
     view.setBackgroundColor(0, 0, 0);
-    view.addPointCloudNormals<pcl::PointNormal>(model_cloud_with_normal, 1, 5,
-                                                "model with normal");
+   // view.addPointCloudNormals<pcl::PointNormal>(model_cloud_with_normal, 1, 5,
+      //                                          "model with normal");
 
-    view.addPointCloudNormals<pcl::PointNormal>(scene_cloud_with_normal, 1, 5,
-                                                "scene with normals");
+    //view.addPointCloudNormals<pcl::PointNormal>(scene_cloud_with_normal, 1, 5,
+               //                                 "scene with normals");
     while (!view.wasStopped()) {
       view.spinOnce(100);
       boost::this_thread::sleep(boost::posix_time::microseconds(1000));
