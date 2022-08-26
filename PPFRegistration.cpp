@@ -536,7 +536,7 @@ void PPFRegistration::compute() {
 */
   /*visualize*/
 /*
-    std::cout << "\ntriple size: " << temp->size() << std::endl;
+    //std::cout << "\ntriple size: " << temp->size() << std::endl;
     std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
     pcl::visualization::PCLVisualizer view("subsampled point cloud");
@@ -551,13 +551,13 @@ void PPFRegistration::compute() {
     view.addPointCloud(model_cloud_with_normal, green, "model");
     view.setPointCloudRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "triple");
-    //view.addPointCloud(scene_cloud_with_normal, white, "scene");
+    view.addPointCloud(scene_cloud_with_normal, white, "scene");
     view.setBackgroundColor(0, 0, 0);
-   // view.addPointCloudNormals<pcl::PointNormal>(model_cloud_with_normal, 1, 5,
-      //                                          "model with normal");
+   view.addPointCloudNormals<pcl::PointNormal>(model_cloud_with_normal, 1, 5,
+                                               "model with normal");
 
-    //view.addPointCloudNormals<pcl::PointNormal>(scene_cloud_with_normal, 1, 5,
-               //                                 "scene with normals");
+    view.addPointCloudNormals<pcl::PointNormal>(scene_cloud_with_normal, 1, 5,
+                                                "scene with normals");
     while (!view.wasStopped()) {
       view.spinOnce(100);
       boost::this_thread::sleep(boost::posix_time::microseconds(1000));

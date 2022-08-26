@@ -130,10 +130,10 @@ void CentralVoting::Solve() {
     // auto model_cloud = SimpleDownSample(model_set[i]);
     // pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
     // DownSample(model_cloud);
-     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-     subsampleAndCalculateNormals(model_set[i]);
-    //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-      //  subsampleAndCalculateNormals(model_set[i], this->triple_set[i], false);
+     //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+     //subsampleAndCalculateNormals(model_set[i]);
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+        subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
     cloud_models_with_normal.push_back(model_with_normal);
     /**
      * 可视化法线
@@ -438,7 +438,7 @@ CentralVoting::subsampleAndCalculateNormals(
   // normal_estimation_filter.setRadiusSearch(normalEstimationRadius);
   normal_estimation_filter.compute(*cloud_subsampled_normals);
   if (reverse) {
-    for (auto i : *cloud_subsampled_normals) {
+    for (auto &i : *cloud_subsampled_normals) {
       i.normal_x = -i.normal_x;
       i.normal_y = -i.normal_y;
       i.normal_z = -i.normal_z;
