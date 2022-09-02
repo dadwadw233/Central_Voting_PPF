@@ -125,6 +125,30 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   return sample_filter.compute();
 }
 void CentralVoting::Solve() {
+
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  seg.setOptimizeCoefficients(true);
+  seg.setModelType(pcl::SACMODEL_PLANE);
+  seg.setMethodType(pcl::SAC_RANSAC);//ransac做点云分割，提取平面
+  seg.setMaxIterations(1000);
+  seg.setDistanceThreshold(0.05);
+  extract.setNegative(true);
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+  pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+  const auto nr_points = scene->size();
+  while (scene->size() > 0.3 * nr_points) {
+    seg.setInputCloud(scene);
+    seg.segment(*inliers, *coefficients);
+    PCL_INFO("Plane inliers: %zu\n",
+             static_cast<std::size_t>(inliers->indices.size())); if
+        (inliers->indices.size() < 50000) break;
+
+    extract.setInputCloud(scene);
+    extract.setIndices(inliers);
+    extract.filter(*scene);
+  }
+
   /*
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud =
   boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -135,15 +159,14 @@ void CentralVoting::Solve() {
   }
    this->scene_subsampled = DownSample(scene_cloud);*/
   // this->scene_subsampled = subsampleAndCalculateNormals(scene);
-  Eigen::Vector4f center;
-  pcl::compute3DCentroid(*scene, center);
+  //Eigen::Vector4f center;
+  //pcl::compute3DCentroid(*scene, center);
   // this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200,
   // center[1], center[2], false);
   this->scene_subsampled = subsampleAndCalculateNormals(
-      scene, Eigen::Vector4f(7.0f, 7.0f, 7.0f, 0.0f));
+      scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
 
   // pcl::copyPointCloud(*scene, *this->scene_subsampled);
-  std::cout << center << std::endl;
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::HashMap::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {

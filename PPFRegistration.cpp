@@ -527,10 +527,11 @@ void PPFRegistration::compute() {
               << this->finalTransformation.matrix();
 
     /****************/
+/*
     pcl::visualization::PCLVisualizer view("subsampled point cloud");
     view.setBackgroundColor(0, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
-        scene_cloud_with_normal, 255, 0, 255);
+        scene_cloud_with_normal, 255, 255, 255);
     view.addPointCloud(scene_cloud_with_normal, white, "scene");
     std::string name = "result";
     for(int i = 0;i<10;i++){
@@ -547,6 +548,7 @@ void PPFRegistration::compute() {
       view.spinOnce(100);
       boost::this_thread::sleep(boost::posix_time::microseconds(1000));
     }
+*/
   }
 
   /**generate cluster **/
