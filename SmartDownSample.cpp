@@ -9,17 +9,17 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   PCL_INFO("\nstart to compute\n");
   PCL_INFO("\nstart to calculate normal\n");
   pcl::PointCloud<pcl::Normal>::Ptr normal(new pcl::PointCloud<pcl::Normal>());
-
+//计算所有点的表面法线
   pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
   normal_estimation_filter.setInputCloud(this->input_cloud);
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
   normal_estimation_filter.setSearchMethod(search_tree);
-  if(isSetViewPoint){
+  if(isSetViewPoint){//自定义视点
     normal_estimation_filter.setViewPoint(view_point[0], view_point[1], view_point[2]);
   }
 
-  if (isSetRadius) {
+  if (isSetRadius) {//两种不同的估计方法
     normal_estimation_filter.setRadiusSearch(normal_estimation_search_radius);
   } else {
     normal_estimation_filter.setKSearch(normal_estimation_search_k_points);
@@ -54,8 +54,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
       std::abs(static_cast<float>(this->y_range.second - this->y_range.first));
   auto zr =
       std::abs(static_cast<float>(this->z_range.second - this->z_range.first));
-
-  PCL_INFO("\nhalf\n");
+  //确定三个方向上的栅格数量
   auto x_num = static_cast<long long int>(std::ceil(xr / this->step));
   auto y_num = static_cast<long long int>(std::ceil(yr / this->step));
   auto z_num = static_cast<long long int>(std::ceil(zr / this->step));
@@ -72,11 +71,11 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   }
 
 #pragma omp barrier
-  PCL_INFO("\nfinish map init\n");
+  PCL_INFO("\nfinish voxel init\n");
 
 #pragma omp parallel for shared(map, x_num, y_num, cloud_with_normals, \
                                 cout) default(none) num_threads(15)
-  for (int i = 0; i < this->input_cloud->points.size(); i++) {
+  for (int i = 0; i < this->input_cloud->points.size(); i++) {//遍历所有点，分配至对应cell
     const int xCell =
         static_cast<int>(std::ceil(
             (input_cloud->points[i].x - this->x_range.first) / step)) == 0
@@ -97,129 +96,67 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
                   (input_cloud->points[i].z - this->z_range.first) / step));
 
     const int index =
-        (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;
+        (xCell - 1) + (yCell - 1) * x_num + (zCell - 1) * x_num * y_num;//确定点所在的cell的index
 
-    // std::cout << index << std::endl;
-    // store the index;
 #pragma omp critical
     map[index]->points.push_back(cloud_with_normals->points[i]);
 
-    // std::cout<<cloud_with_normals->points[i].normal_x<<std::endl;
   }
 
 #pragma omp barrier
-
-  int sum = 0;
-  for (int i = 0; i < map.size(); i++) {
-    if (!map[i]->points.empty()) {
-      sum += map[i]->points.size();
-    }
-  }
-  std::cout << sum << std::endl;
-  std::cout << this->input_cloud->points.size();  // 24325
 
   PCL_INFO("\nfinish store point\n");
 
 #pragma omp parallel for shared(map, output_cloud, cout) default(none) \
     num_threads(15)
-  for (int i = 0; i < map.size(); i++) {
-    int cnt = 0;
-    if (map[i]->points.empty()) {
+  for (int i = 0; i < map.size(); i++) {//遍历所有cell
+    if (map[i]->points.empty()) {//cell为空
       continue;
-    } else if (map[i]->points.size() == 1 && isdense) {
+    } else if (map[i]->points.size() == 1 && isdense) {//cell中只有一个点
 #pragma omp critical
       output_cloud->points.push_back(map[i]->points[0]);
       continue;
-    } else {
-      bool flag[map[i]->points.size()];
-      for (int p = 0; p < map[i]->points.size(); p++) {
-        flag[p] = false;
-      }
-      for (int j = 0; j < map[i]->points.size(); j++) {
-        if (cnt == map[i]->points.size() ||
-            (cnt >= map[i]->points.size() / 3 && !isdense)) {
-          break;
-        }
-
-        for (int k = 0; k < map[i]->points.size(); k++) {
-          if (j == k) {
-            continue;
-          } else if (flag[j] && flag[k]) {
-            continue;
-          } else {
-            if (pcl::getAngle3D(static_cast<const Eigen::Vector3f>(
-                                    map[i]->points[j].normal),
-                                static_cast<const Eigen::Vector3f>(
-                                    map[i]->points[k].normal),
-                                true) >= this->angleThreshold) {
-              if (!flag[j]) {
-                flag[j] = true;
-#pragma omp critical
-                output_cloud->points.push_back(map[i]->points[j]);
-                cnt++;
-              }
-              if (!flag[k]) {
-                flag[k] = true;
-#pragma omp critical
-                output_cloud->points.push_back(map[i]->points[k]);
-                cnt++;
-              }
+    } else {//cell中有多个点
+      std::vector<std::vector<pcl::PointNormal>>cluster;
+      for (int j = 0; j < map[i]->points.size(); j++) {//遍历cell内的所有点
+        bool inside = false;
+        for(auto cluster_index = 0;cluster_index<cluster.size();cluster_index++){
+          bool flag = true;
+          for(auto point_index = 0;point_index<cluster[cluster_index].size();point_index++){
+            if(pcl::getAngle3D(static_cast<Eigen::Vector3f>(cluster[cluster_index][point_index].normal), static_cast<Eigen::Vector3f>(map[i]->points[j].normal),true)<this->angleThreshold){
+              continue;
+            }else{
+              flag = false;
+              break;//只要有一组之间的角度差大于阈值，直接跳出
             }
           }
+          if(flag){//满足并入当前group的要求
+            cluster[cluster_index].push_back(map[i]->points[j]);
+            inside = true;
+            break;//当前点已经找到对应group，直接退出
+          }else{
+            continue;//在其他group中继续搜索
+          }
+        }
+        if(inside){
+          continue;
+        }else{
+          std::vector<pcl::PointNormal>new_cluster;
+          new_cluster.push_back(map[i]->points[j]);
+          cluster.push_back(new_cluster);
         }
       }
-    }
-    if (cnt == 0 && isdense) {
-      Eigen::Vector4f center;
-      pcl::compute3DCentroid(*map[i], center);
-      pcl::PointNormal p;
-      p.x = center(0);
-      p.y = center(1);
-      p.z = center(2);
-      map[i]->points.push_back(p);
-      //法向量求解器
-      pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::PointNormal>
-          pointNormalEstimation;
-      //法向量
-      pcl::PointNormal pointNormal;
-      //我们要求解的点,这个点的index你可以自己设置
-      pcl::PointNormal searchPoint = map[i]->points[map[i]->points.size() - 1];
-      // KNN
-      pcl::search::KdTree<pcl::PointNormal>::Ptr tree(
-          new pcl::search::KdTree<pcl::PointNormal>());
-      //设置KdTree要求解的点云参数
-      tree->setInputCloud(map[i]);
-      //这是K近邻的半径
-      float radius = this->normal_estimation_search_radius;
-      //关键的数据indices
-      std::vector<int> indices;
-      //每个点到searchPoint的距离(暂时用不到)
-      std::vector<float> distance;
-
-      if (isSetPoints) {
-        tree->nearestKSearch(searchPoint, map.size() - 1, indices, distance);
-      } else {
-        tree->radiusSearch(searchPoint, radius, indices, distance);
-      }
-
-      //输出参数1>平面数据(可以转化为法向量)
-      Eigen::Vector4f planeParams;
-      //输出参数2>平面曲率
-      float curvature;
-      //进行单个点的法向量求解
-      pcl::PointCloud<pcl::PointXYZ> cloud;
-      pcl::copyPointCloud(*map[i], cloud);
-      pointNormalEstimation.computePointNormal(cloud, indices, planeParams,
-                                               curvature);
-      pointNormal.x = searchPoint.x;
-      pointNormal.y = searchPoint.y;
-      pointNormal.z = searchPoint.z;
-      pointNormal.normal_x = planeParams[0];
-      pointNormal.normal_y = planeParams[1];
-      pointNormal.normal_z = planeParams[2];
-      pointNormal.curvature = curvature;
+      //每一个cell中的点遍历结束之后对聚类求均值
+      for(auto cluster_index = 0;cluster_index<cluster.size();cluster_index++){
+        if(cluster[cluster_index].size() == 0){
 #pragma omp critical
-      output_cloud->points.push_back(pointNormal);
+          output_cloud->points.push_back(cluster[cluster_index][0]);
+        }else{
+          auto Mean = getMeanPointNormal(cluster[cluster_index]);
+#pragma omp critical
+          output_cloud->points.push_back(Mean);
+        }
+      }
     }
   }
   PCL_INFO("\ndown sample finish\n");
@@ -252,3 +189,4 @@ void SmartDownSample::setKSearch(const int data) {
   this->isSetPoints = true;
   this->isSetRadius = false;
 }
+

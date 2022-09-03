@@ -4,6 +4,7 @@
 
 #ifndef CENTRAL_VOTING_SMARTDOWNSAMPLE_H
 #define CENTRAL_VOTING_SMARTDOWNSAMPLE_H
+#define PCL_NO_PRECOMPILE
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/ppf.h>
 #include <pcl/filters/extract_indices.h>
@@ -43,10 +44,11 @@
 #include "pcl/features/normal_3d.h"
 #include "pcl/features/normal_3d_omp.h"
 #include "pcl/filters/filter.h"
-#include "pcl/impl/point_types.hpp"
 #include "pcl/search/kdtree.h"
-
+#include "pcl/impl/point_types.hpp"
 #include <pcl/common/common.h>
+
+
 class SmartDownSample {
  public:
   SmartDownSample(const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud,
@@ -101,6 +103,28 @@ class SmartDownSample {
 
 
  private:
+  decltype(auto) getMeanPointNormal(const std::vector<pcl::PointNormal> &cluster){
+    pcl::PointNormal Mean{};
+    for(auto &i:cluster){
+      Mean.x+=i.x;
+      Mean.y+=i.y;
+      Mean.z+=i.z;
+      Mean.normal_x+=i.normal_x;
+      Mean.normal_y+=i.normal_y;
+      Mean.normal_z+=i.normal_z;
+    }
+    auto num = cluster.size();
+    Mean.x/=num;
+    Mean.y/=num;
+    Mean.z/=num;
+    Eigen::Vector3f normal_{Mean.normal_x,Mean.normal_y,Mean.normal_z};
+    normal_ = normal_.normalized();
+    Mean.normal_x = normal_[0];
+    Mean.normal_y = normal_[1];
+    Mean.normal_z = normal_[2];
+    return Mean;
+  }
+
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_cloud;
   std::pair<double, double> x_range;
   std::pair<double, double> y_range;
