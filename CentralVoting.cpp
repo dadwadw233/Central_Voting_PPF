@@ -239,6 +239,7 @@ void CentralVoting::Solve() {
 }
 
 void CentralVoting::test() {
+  /*
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene_ =
       boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   if (isAdaptiveDownSample) {
@@ -246,8 +247,8 @@ void CentralVoting::test() {
   } else {
     scene_ = SimpleDownSample(this->scene);
   }
-
-  pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(scene_);
+*/
+  pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(model_set[0]);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
