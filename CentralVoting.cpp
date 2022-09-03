@@ -8,7 +8,7 @@
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
-  std::cout << "pcl函数计算质心结果" << std::endl << center;
+  std::cout << "pcl函数计算质心结果" << std::endl << center<<std::endl;
   pcl::PointXYZ p;
   p.x = center(0);
   p.y = center(1);
@@ -20,36 +20,18 @@ void CentralVoting::CenterExtractor(int index) {
 
   pcl::PointXYZ min_point_AABB;
   pcl::PointXYZ max_point_AABB;
-  Eigen::Vector3f major_vector, middle_vector, minor_vector;
-  Eigen::Vector3f mass_center;
   feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-  feature_extractor.getEigenVectors(major_vector, middle_vector, minor_vector);
-  feature_extractor.getMassCenter(mass_center);
-  std::cout << "min_point:" << min_point_AABB << std::endl
-            << "max_point:" << max_point_AABB << std::endl;
-  // pcl::visualization::PCLVisualizer view("model with center point");
+  std::cout << "min_point:\n" << min_point_AABB << std::endl
+            << "max_point:\n" << max_point_AABB << std::endl;
 
-  pcl::PointXYZ center_(mass_center(0), mass_center(1), mass_center(2));
-  pcl::PointXYZ x_axis(major_vector(0) * 100 + mass_center(0),
-                       major_vector(1) * 100 + mass_center(1),
-                       major_vector(2) * 100 + mass_center(2));
-  pcl::PointXYZ y_axis(middle_vector(0) * 100 + mass_center(0),
-                       middle_vector(1) * 100 + mass_center(1),
-                       middle_vector(2) * 100 + mass_center(2));
-  pcl::PointXYZ z_axis(minor_vector(0) * 100 + mass_center(0),
-                       minor_vector(1) * 100 + mass_center(1),
-                       minor_vector(2) * 100 + mass_center(2));
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> model_color(
       255, 255, 255);
-  // std::cout<<" center: "<<center<<std::endl;
   pcl::PointXYZ p_faux(center[0], center[1], center[2]);
   pcl::PointXYZ p_saux(center[0], center[1], center[2]);
   pcl::PointXYZ c(center[0], center[1], center[2]);
-  // std::vector<pcl::PointXYZ> triple;
   double d_obj = std::sqrt(std::pow(max_point_AABB.x - min_point_AABB.x, 2) +
                            std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
-  // std::cout<<" d_obj: "<<d_obj<<std::endl;
   this->d_obj_set.push_back(static_cast<float>(d_obj));
   std::cout << "\nd_obj: " << d_obj << std::endl;
   p_faux.x -= static_cast<float>(d_obj);
@@ -58,10 +40,12 @@ void CentralVoting::CenterExtractor(int index) {
   this->triple_set[index].push_back(c);
   this->triple_set[index].push_back(p_faux);
   this->triple_set[index].push_back(p_saux);
-  /*
+
+/*
+  pcl::visualization::PCLVisualizer view("model with center point");
     pcl::PointCloud<pcl::PointXYZ>::Ptr triple_cloud(
         new pcl::PointCloud<pcl::PointXYZ>());
-    triple_cloud->points.push_back(center_);
+    triple_cloud->points.push_back(c);
     triple_cloud->points.push_back(p_faux);
     triple_cloud->points.push_back(p_saux);
 
@@ -76,9 +60,6 @@ void CentralVoting::CenterExtractor(int index) {
     view.setShapeRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_REPRESENTATION,
         pcl::visualization::PCL_VISUALIZER_REPRESENTATION_WIREFRAME, "AABB");
-    view.addLine(center_, x_axis, 1.0f, 0.0f, 0.0f, "major eigen vector");
-    view.addLine(center_, y_axis, 0.0f, 1.0f, 0.0f, "middle eigen vector");
-    view.addLine(center_, z_axis, 0.0f, 0.0f, 1.0f, "minor eigen vector");
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
         triple_cloud, 255, 0, 0);
     view.addPointCloud(triple_cloud, red, "triple");
@@ -88,7 +69,8 @@ void CentralVoting::CenterExtractor(int index) {
     while (!view.wasStopped()) {
       view.spinOnce(100);
       boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-    }*/
+    }
+    */
 }
 
 pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
@@ -101,8 +83,6 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
                                 std::make_pair(min_point.z, max_point.z),
                                 this->step, this->AngleThreshold, 0.01);
   sample_filter.setIsdense(false);
-  // sample_filter.setRadius(this->normalEstimationRadius);
-
   sample_filter.setKSearch(this->k_point);
   return sample_filter.compute();
 }
@@ -119,8 +99,6 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   sample_filter.setIsdense(false);
   sample_filter.setViewPoint(Eigen::Vector3f(view_point[0].x, view_point[0].y, view_point[0].z));
   sample_filter.setReverse(true);
-  // sample_filter.setRadius(this->normalEstimationRadius);
-
   sample_filter.setKSearch(this->k_point);
   return sample_filter.compute();
 }
