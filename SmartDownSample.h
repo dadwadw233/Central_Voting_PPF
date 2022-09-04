@@ -112,11 +112,13 @@ class SmartDownSample {
       Mean.normal_x+=i.normal_x;
       Mean.normal_y+=i.normal_y;
       Mean.normal_z+=i.normal_z;
+      Mean.curvature+=i.curvature;
     }
     auto num = cluster.size();
     Mean.x/=num;
     Mean.y/=num;
     Mean.z/=num;
+    Mean.curvature/=num;
     Eigen::Vector3f normal_{Mean.normal_x,Mean.normal_y,Mean.normal_z};
     normal_ = normal_.normalized();
     Mean.normal_x = normal_[0];

@@ -212,6 +212,8 @@ void PPFRegistration::compute() {
       std::ceil(yr / this->clustering_position_diff_threshold));
   auto z_num = static_cast<long long int>(
       std::ceil(zr / this->clustering_position_diff_threshold));
+
+  PCL_INFO("初始化完成\n");
   pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector3f p1{};
@@ -487,7 +489,7 @@ void PPFRegistration::compute() {
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(this->clustering_position_diff_threshold);
-  ec.setMinClusterSize(500);
+  ec.setMinClusterSize(10);
   ec.setMaxClusterSize(25000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(temp);
@@ -561,7 +563,7 @@ void PPFRegistration::compute() {
 */
   /*visualize*/
 /*
-    //std::cout << "\ntriple size: " << temp->size() << std::endl;
+    std::cout << "\ntriple size: " << temp->size() << std::endl;
     std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
     pcl::visualization::PCLVisualizer view("subsampled point cloud");

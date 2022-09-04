@@ -127,34 +127,24 @@ void CentralVoting::Solve() {
     extract.filter(*scene);
   }
 
-  /*
-  pcl::PointCloud<pcl::PointXYZ>::Ptr scene_cloud =
-  boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-  if(this->isAdaptiveDownSample){
-    scene_cloud = adaptiveDownSample(scene);
-  }else{
-    scene_cloud = SimpleDownSample(scene);
-  }
-   this->scene_subsampled = DownSample(scene_cloud);*/
+   this->scene_subsampled = DownSample(scene);
   // this->scene_subsampled = subsampleAndCalculateNormals(scene);
   //Eigen::Vector4f center;
   //pcl::compute3DCentroid(*scene, center);
   // this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200,
   // center[1], center[2], false);
-  this->scene_subsampled = subsampleAndCalculateNormals(
-      scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
-
-  // pcl::copyPointCloud(*scene, *this->scene_subsampled);
+  //this->scene_subsampled = subsampleAndCalculateNormals(
+      //scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::HashMap::Ptr> hashmap_search_vector;
   for (auto i = 0; i < this->model_set.size(); i++) {
     //auto model_cloud = SimpleDownSample(model_set[i]);
-    //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-    //DownSample(model_cloud, this->triple_set[i], true);
+    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+    DownSample(model_set[i], this->triple_set[i], true);
      //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
      //subsampleAndCalculateNormals(model_set[i]);
-    pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-        subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
+    //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
+     //   subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
     cloud_models_with_normal.push_back(model_with_normal);
     /**
      * 可视化法线
@@ -201,7 +191,7 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(12);  //投票的体素网格的size
+    ppf_registration.setPositionClusteringThreshold(10);  //投票的体素网格的size
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
