@@ -187,7 +187,12 @@ void CentralVoting::Solve() {
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
-  auto tp1 = std::chrono::steady_clock::now();
+  Eigen::Matrix4f GT{};
+  GT<<0.999126, 0.0369223, 0.0196902, -100.672,
+            -0.0372036, 0.999209, 0.0140794, 171.854,
+            -0.0191553, -0.014799, 0.999706, -16.0715,
+            0, 0, 0, 1;
+            auto tp1 = std::chrono::steady_clock::now();
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
@@ -201,6 +206,7 @@ void CentralVoting::Solve() {
     ppf_registration.setDobj(this->d_obj_set[model_i]);
     ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI),
                                             0.05f);
+    ppf_registration.setGroundTruthTransform(GT);
     ppf_registration.compute();
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(

@@ -45,10 +45,43 @@ class PPFRegistration {
 
   void establishVoxelGrid();
 
+  void setGroundTruthTransform(const Eigen::Matrix4f &gt_){
+    this->gt<<gt_;
+  }
+
   PPFRegistration &operator=(const PPFRegistration &) = delete;
   PPFRegistration(const PPFRegistration &) = delete;
 
  private:
+  double calculate_rotation_error(Eigen::Matrix3f& est, Eigen::Matrix3f& gt) {
+    double tr = (est.transpose() * gt).trace();
+    if (tr > 3) tr = 3;
+    if (tr < -1) tr = -1;
+    return acos((tr - 1) / 2) * 180.0 / M_PI;
+  }
+
+  double calculate_translation_error(Eigen::Vector3f& est, Eigen::Vector3f& gt) {
+    Eigen::Vector3f t = est - gt;
+    return sqrt(t.dot(t));
+  }
+
+  bool evaluation_est(Eigen::Matrix4f est/*估计*/, Eigen::Matrix4f gt/*真值*/, double re_thresh/*旋转误差阈值*/, double te_thresh/*平移误差阈值*/, double& RE/*旋转误差*/, double& TE/*平移误差*/) {
+    Eigen::Matrix3f rotation_est, rotation_gt;
+    Eigen::Vector3f translation_est, translation_gt;
+    rotation_est = est.topLeftCorner(3, 3);
+    rotation_gt = gt.topLeftCorner(3, 3);
+    translation_est = est.block(0, 3, 3, 1);
+    translation_gt = gt.block(0, 3, 3, 1);
+
+    RE = calculate_rotation_error(rotation_est, rotation_gt);
+    TE = calculate_translation_error(translation_est, translation_gt);
+    if (0 <= RE && RE <= re_thresh && 0 <= TE && TE <= te_thresh)
+    {
+      return true;
+    }
+    return false;
+  }
+
   struct data_ {
     std::vector<Eigen::Affine3f> T_set;
     int value = 0;
@@ -96,13 +129,28 @@ class PPFRegistration {
   float calculateDistance(T &pointA, T &pointB);
 
   decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set) {
-    Eigen::Matrix4f temp;
-    temp << 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    Eigen::Quaternionf sum{0,0,0,0};
+    Eigen::Vector3f t{0,0,0};
     for (auto i : T_set) {
-      temp += i.matrix();
+      Eigen::Quaternionf temp{i.rotation()};
+      sum.w()+=temp.w();
+      sum.x()+=temp.x();
+      sum.y()+=temp.y();
+      sum.z()+=temp.z();
+      t+=i.translation();
     }
-    temp /= T_set.size();
-    return temp;
+    sum.w()/=T_set.size();
+    sum.x()/=T_set.size();
+    sum.y()/=T_set.size();
+    sum.z()/=T_set.size();
+    t/=T_set.size();
+    Eigen::Affine3f R{sum};
+    Eigen::Matrix4f result{};
+    result<<R.rotation()(0,0),R.rotation()(0,1),R.rotation()(0,2),t[0],
+        R.rotation()(1,0),R.rotation()(1,1),R.rotation()(1,2),t[1],
+        R.rotation()(2,0),R.rotation()(2,1),R.rotation()(2,2),t[2],
+        0,0,0,1;
+    return result;
   }
   float scene_reference_point_sampling_rate{};
   float clustering_position_diff_threshold{};
@@ -113,6 +161,7 @@ class PPFRegistration {
   pcl::PointCloud<pcl::PointNormal>::Ptr model_cloud_with_normal;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Affine3f finalTransformation;
+  Eigen::Matrix4f gt{};
   Hash::HashMap::Ptr searchMap;
   std::vector<pcl::PointXYZ> triple_set;
   float angle_discretization_step;

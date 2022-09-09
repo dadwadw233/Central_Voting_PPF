@@ -495,12 +495,19 @@ void PPFRegistration::compute() {
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
 */
+  int success = 0;
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if (this->map_.empty()) {
     std::cout << "no ans" << std::endl;
   } else {
     for (const auto &i : this->map_) {
+      for(const auto &j:i.second.T_set){
+        double RE,TE;
+        if(evaluation_est(j.matrix(),this->gt,15,20,RE,TE)){
+          success++;
+        }
+      }
       auto T_mean = getMeanMatrix(i.second.T_set);
       // auto T_mean = i.second.T_set[0].matrix();
       if (isnan(T_mean(0, 0))) {
@@ -509,7 +516,7 @@ void PPFRegistration::compute() {
       auto cnt = HypoVerification(T_mean);
 
       Eigen::Affine3f temp_(T_mean);
-      // std::cout<<temp.matrix()<<std::endl;
+
       struct data node(temp_, cnt+i.second.value);
       T_queue.push(node);
       if (i.second.value > max_vote) {
@@ -519,6 +526,7 @@ void PPFRegistration::compute() {
         continue;
       }
     }
+    std::cout<<"success T num:"<<success<<std::endl;
     std::cout << "final vote: " << max_vote << std::endl;
     while (isnan(T_queue.top().T(0, 0))) {
       T_queue.pop();
