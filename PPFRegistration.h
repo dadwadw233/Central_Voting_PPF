@@ -83,10 +83,18 @@ class PPFRegistration {
   }
 
   struct data_ {
-    std::vector<Eigen::Affine3f> T_set;
+    Eigen::Quaternionf sumQ{0,0,0,0};
+    Eigen::Vector3f sumt{0,0,0};
     int value = 0;
     data_(const Eigen::Affine3f &T_, const int value_) {
-      T_set.push_back(T_);
+      auto q = Eigen::Quaternionf (T_.rotation());
+      sumQ.x()+= q.x();
+      sumQ.y()+= q.y();
+      sumQ.z()+= q.z();
+      sumQ.w()+= q.w();
+      sumt.x()+= T_.translation().x();
+      sumt.y()+= T_.translation().y();
+      sumt.z()+= T_.translation().z();
       value += value_;
     }
   };
@@ -128,23 +136,14 @@ class PPFRegistration {
   template <class T>
   float calculateDistance(T &pointA, T &pointB);
 
-  decltype(auto) getMeanMatrix(const std::vector<Eigen::Affine3f> &T_set) {
-    Eigen::Quaternionf sum{0,0,0,0};
-    Eigen::Vector3f t{0,0,0};
-    for (auto i : T_set) {
-      Eigen::Quaternionf temp{i.rotation()};
-      sum.w()+=temp.w();
-      sum.x()+=temp.x();
-      sum.y()+=temp.y();
-      sum.z()+=temp.z();
-      t+=i.translation();
-    }
-    sum.w()/=T_set.size();
-    sum.x()/=T_set.size();
-    sum.y()/=T_set.size();
-    sum.z()/=T_set.size();
-    t/=T_set.size();
-    Eigen::Affine3f R{sum};
+  decltype(auto) getMeanMatrix(const data_ &data) {
+    Eigen::Quaternionf averQ {};
+    averQ.x() = data.sumQ.x()/ data.value;
+    averQ.y() = data.sumQ.y()/ data.value;
+    averQ.z() = data.sumQ.z()/ data.value;
+    averQ.w() = data.sumQ.w()/ data.value;
+    Eigen::Vector3f t = data.sumt/data.value;
+    Eigen::Affine3f R{averQ};
     Eigen::Matrix4f result{};
     result<<R.rotation()(0,0),R.rotation()(0,1),R.rotation()(0,2),t[0],
         R.rotation()(1,0),R.rotation()(1,1),R.rotation()(1,2),t[1],

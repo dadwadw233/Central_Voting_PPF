@@ -63,21 +63,18 @@ void PPFRegistration::setModelTripleSet(
 void PPFRegistration::setDobj(const float &data) { this->d_obj = data; }
 
 void PPFRegistration::vote(const key_ &key, const Eigen::Affine3f &T) {
-  if (map_.find(key) != map_.end()) {
-    (map_.find(key)->second).value += 1;
-    (map_.find(key)->second).T_set.push_back(T);
+  auto data = map_.find(key);
+  Eigen::Quaternionf tempQ =  Eigen::Quaternionf (T.rotation());
+  if (data != map_.end()) {
+    (data->second).value += 1;
+    (data->second).sumQ.x()+= tempQ.x();
+    (data->second).sumQ.y()+= tempQ.y();
+    (data->second).sumQ.z()+= tempQ.z();
+    (data->second).sumQ.w()+= tempQ.w();
+    (data->second).sumt += T.translation();
   } else {
     data_ d(T, 1);
     map_.emplace(key, d);
-  }
-}
-void PPFRegistration::vote(const int &key, const Eigen::Affine3f &T) {
-  if (map_center.find(key) != map_center.end()) {
-    (map_center.find(key)->second).value += 1;
-    (map_center.find(key)->second).T_set.push_back(T);
-  } else {
-    data_ d(T, 1);
-    map_center.emplace(key, d);
   }
 }
 
@@ -134,7 +131,6 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
       }
     }
   }
-
   //#pragma omp barrier
   return cnt;
 }
@@ -221,18 +217,18 @@ void PPFRegistration::compute() {
   Eigen::Vector3f n1{};
   Eigen::Vector3f n2{};
   Eigen::Vector3f delta{};
-  auto tp1 = boost::chrono::steady_clock::now();
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
   std::cout << "finish Registering init" << std::endl;
   std::cout << "computing ..." << std::endl;
-  for (auto i = 0; i < scene_cloud_with_normal->points.size(); ++i) {
+  auto tp1 = boost::chrono::steady_clock::now();
+  for (auto i = 0; i < scene_cloud_with_normal->points.size(); i+=10) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
     scene_reference_point_sampling_rate,cout) private(p1, p2, n1, n2, delta,       \
                                                  feature, data) default(none) \
     num_threads(15)
-    for (auto j = 0; j < scene_cloud_with_normal->points.size() / 10; ++j) {
+    for (auto j = 0; j < scene_cloud_with_normal->points.size(); ++j) {
       if (i == j) {
         continue;
       } else {
@@ -495,6 +491,10 @@ void PPFRegistration::compute() {
   ec.setInputCloud(temp);
   ec.extract(cluster_indices);
 */
+  auto tp2 = boost::chrono::steady_clock::now();
+  std::cout << "\n完成match阶段用时为： "
+            << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp2 - tp1)
+                   .count()<<"毫秒\n";
   int success = 0;
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
@@ -502,13 +502,13 @@ void PPFRegistration::compute() {
     std::cout << "no ans" << std::endl;
   } else {
     for (const auto &i : this->map_) {
-      for(const auto &j:i.second.T_set){
+      /*for(const auto &j:i.second.T_set){
         double RE,TE;
         if(evaluation_est(j.matrix(),this->gt,15,20,RE,TE)){
           success++;
         }
-      }
-      auto T_mean = getMeanMatrix(i.second.T_set);
+      }*/
+      auto T_mean = getMeanMatrix(i.second);
       // auto T_mean = i.second.T_set[0].matrix();
       if (isnan(T_mean(0, 0))) {
         continue;
@@ -526,6 +526,10 @@ void PPFRegistration::compute() {
         continue;
       }
     }
+    auto tp3 = boost::chrono::steady_clock::now();
+    std::cout << "\n完成假设检验阶段用时为： "
+              << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp3 - tp2)
+                     .count()<<"毫秒\n";
     std::cout<<"success T num:"<<success<<std::endl;
     std::cout << "final vote: " << max_vote << std::endl;
     while (isnan(T_queue.top().T(0, 0))) {
