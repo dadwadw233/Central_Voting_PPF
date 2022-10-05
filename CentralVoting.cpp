@@ -186,10 +186,10 @@ void CentralVoting::Solve() {
             auto tp1 = std::chrono::steady_clock::now();
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
-    //pcl::PointCloud<pcl::PointNormal>::Ptr hypo_model = DownSample(model_set[model_i],40.0,30.0);
-    //pcl::PointCloud<pcl::PointNormal>::Ptr hypo_scene = DownSample(model_set[model_i],40.0,30.0);
-    //std::cout<<"用于假设检验的点云数量："<<std::endl<<"model: "<<hypo_model->points.size()
-    //<<std::endl<<"scene: "<<hypo_scene->points.size()<<std::endl;
+    pcl::PointCloud<pcl::PointNormal>::Ptr hypo_model = DownSample(model_set[model_i],40.0,30.0);
+    pcl::PointCloud<pcl::PointNormal>::Ptr hypo_scene = DownSample(model_set[model_i],40.0,30.0);
+    std::cout<<"用于假设检验的点云数量："<<std::endl<<"model: "<<hypo_model->points.size()
+    <<std::endl<<"scene: "<<hypo_scene->points.size()<<std::endl;
     ppf_registration.setSceneReferencePointSamplingRate(10);
     ppf_registration.setPositionClusteringThreshold(10);  //投票的体素网格的size
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
@@ -202,8 +202,8 @@ void CentralVoting::Solve() {
     ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI),
                                             0.05f);
 
-    ppf_registration.setHypoSource(cloud_models_with_normal[model_i]);
-    ppf_registration.setHypoTarget(this->scene_subsampled);
+    ppf_registration.setHypoSource(hypo_model);
+    ppf_registration.setHypoTarget(hypo_scene);
     ppf_registration.setGroundTruthTransform(GT);
     ppf_registration.compute();
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
