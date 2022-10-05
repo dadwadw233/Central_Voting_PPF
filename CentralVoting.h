@@ -73,14 +73,13 @@ class CentralVoting {
   pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud, const std::vector<pcl::PointXYZ> &view_point, const bool &reverse ) const;
 
+  pcl::PointCloud<pcl::PointNormal>::Ptr DownSample(
+      const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud, const float &step_, const float &angleThreshold_) const;
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr SimpleDownSample(
       pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
   void Solve();
-
-  void EstablishHashMap();
-
-  void EstablishLRF();
 
   void test();  //测试入口函数
 

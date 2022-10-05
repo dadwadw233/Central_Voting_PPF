@@ -36,6 +36,10 @@ class PPFRegistration {
 
   void setInputTarget(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 
+  void setHypoSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
+
+  void setHypoTarget(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
+
   void setDiscretizationSteps(const float &angle_discretization_step,
                               const float &distance_discretization_step);
 
@@ -159,6 +163,8 @@ class PPFRegistration {
   std::pair<double, double> z_range;
   pcl::PointCloud<pcl::PointNormal>::Ptr model_cloud_with_normal;
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
+  pcl::PointCloud<pcl::PointNormal>::Ptr hypo_scene_cloud;
+  pcl::PointCloud<pcl::PointNormal>::Ptr hypo_model_cloud;
   Eigen::Affine3f finalTransformation;
   Eigen::Matrix4f gt{};
   Hash::HashMap::Ptr searchMap;

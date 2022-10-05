@@ -8,6 +8,8 @@
 PPFRegistration::PPFRegistration() {
   model_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
   scene_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
+  hypo_model_cloud.reset(new pcl::PointCloud<pcl::PointNormal>());
+  hypo_scene_cloud.reset(new pcl::PointCloud<pcl::PointNormal>());
   searchMap.reset(new Hash::HashMap());
 }
 void PPFRegistration::setSceneReferencePointSamplingRate(
@@ -32,6 +34,13 @@ void PPFRegistration::setInputTarget(
 void PPFRegistration::setInputSource(
     const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
   this->model_cloud_with_normal = cloud;
+}
+void PPFRegistration::setHypoSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud){
+  this->hypo_model_cloud = cloud;
+}
+
+void PPFRegistration::setHypoTarget(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud){
+  this->hypo_scene_cloud = cloud;
 }
 void PPFRegistration::setSearchMap(const Hash::HashMap::Ptr &searchMap) {
   this->searchMap = searchMap;
@@ -137,12 +146,12 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
 decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   pcl::PointCloud<pcl::PointNormal>::Ptr temp =
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-  pcl::transformPointCloud(*this->model_cloud_with_normal, *temp, T);
+  pcl::transformPointCloud(*this->hypo_model_cloud, *temp, T);
   pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree(
       new pcl::search::KdTree<pcl::PointNormal>());
   auto cnt = 0;
   double radius = 0.02 * this->d_obj;
-  kdtree->setInputCloud(this->scene_cloud_with_normal);
+  kdtree->setInputCloud(this->hypo_scene_cloud);
   std::vector<int> nan;
   pcl::PointCloud<pcl::PointNormal>::Ptr temp_ =
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
@@ -164,7 +173,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
       for (auto j = 0; j < indices.size(); ++j) {
         if (pcl::getAngle3D(
                 static_cast<const Eigen::Vector3f>(
-                    scene_cloud_with_normal->points[indices[j]].normal),
+                    hypo_scene_cloud->points[indices[j]].normal),
                 static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
                 true) < 25) {
           num++;
@@ -603,3 +612,5 @@ void PPFRegistration::compute() {
     }
 */
 }
+
+
