@@ -48,6 +48,8 @@
 #include "pcl/impl/point_types.hpp"
 #include <pcl/common/common.h>
 
+#include "queue"
+
 
 class SmartDownSample {
  public:
@@ -126,11 +128,25 @@ class SmartDownSample {
     Mean.normal_z = normal_[2];
     return Mean;
   }
-
+  struct data{
+    int i;
+    int j;
+    pcl::PointNormal Mean{};
+    data(const int &i_, const int &j_, const pcl::PointNormal &Mean_ ):i(i_), j(j_), Mean(Mean_){}
+  };
+  struct cmp {
+    bool operator()(data a, data b) {
+      if (a.i == b.i)
+        return a.j > b.j;
+      else
+        return a.i > b.i;
+    }
+  };
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr input_cloud;
   std::pair<double, double> x_range;
   std::pair<double, double> y_range;
   std::pair<double, double> z_range;
+  std::priority_queue<data, std::vector<data>, cmp>q;
   float step;
   float angleThreshold, distanceThreshold;
   float normal_estimation_search_radius;

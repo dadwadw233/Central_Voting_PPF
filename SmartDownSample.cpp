@@ -148,13 +148,20 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
         } else {
           auto Mean = getMeanPointNormal(cluster[cluster_index]);
 #pragma omp critical
-          output_cloud->points.push_back(Mean);
+          this->q.push(data(i,cluster_index,Mean));
         }
       }
     }
   }
-  std::cout << "采样点云数量： " << output_cloud->points.size() << std::endl;
+
+
 #pragma omp barrier
+
+  while(!q.empty()){
+    output_cloud->points.push_back(q.top().Mean);
+    q.pop();
+  }
+  std::cout << "采样点云数量： " << output_cloud->points.size() << std::endl;
   return output_cloud;
 }
 

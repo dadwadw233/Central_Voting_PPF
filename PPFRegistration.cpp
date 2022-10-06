@@ -222,7 +222,7 @@ void PPFRegistration::compute() {
   std::cout << "Registering ..." << std::endl;
   auto tp1 = boost::chrono::steady_clock::now();
   int cnt = 0;
-  for (auto i = 0; i < scene_cloud_with_normal->points.size(); i++) {
+  for (auto i = 0; i < scene_cloud_with_normal->points.size(); i+=10) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
     scene_reference_point_sampling_rate,cout,cnt) private(p1, p2, n1, n2, delta,       \
