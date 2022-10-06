@@ -112,7 +112,7 @@ class SmartDownSample {
       Mean.normal_x+=i.normal_x;
       Mean.normal_y+=i.normal_y;
       Mean.normal_z+=i.normal_z;
-      Mean.curvature+=i.curvature;
+      Mean.curvature+=i.curvature;//对曲率做了平均处理
     }
     auto num = cluster.size();
     Mean.x/=num;

@@ -149,7 +149,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   temp_->is_dense = false;
   pcl::removeNaNFromPointCloud(*temp, *temp_, nan);
 #pragma omp parallel for shared(temp, radius, cnt, kdtree, \
-                                temp_) default(none) num_threads(15)
+                                temp_) default(none) num_threads(1)
   for (auto i = 0; i < temp_->points.size(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
@@ -221,10 +221,11 @@ void PPFRegistration::compute() {
   std::cout << "online初始化完成" << std::endl;
   std::cout << "Registering ..." << std::endl;
   auto tp1 = boost::chrono::steady_clock::now();
-  for (auto i = 0; i < scene_cloud_with_normal->points.size(); i+=10) {
+  int cnt = 0;
+  for (auto i = 0; i < scene_cloud_with_normal->points.size(); i++) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
-    scene_reference_point_sampling_rate,cout) private(p1, p2, n1, n2, delta,       \
+    scene_reference_point_sampling_rate,cout,cnt) private(p1, p2, n1, n2, delta,       \
                                                  feature, data) default(none) \
     num_threads(15)
     for (auto j = 0; j < scene_cloud_with_normal->points.size(); ++j) {
@@ -301,11 +302,14 @@ void PPFRegistration::compute() {
         data.second.r = scene_cloud_with_normal->points[i];
         data.second.t = scene_cloud_with_normal->points[j];
         if (searchMap->find(data.first)) {
+
           auto model_lrf = this->searchMap->getData(data.first);
           auto same_k = this->searchMap->getSameKeyNum(data.first);
 
 
           for(size_t i = 0;i<same_k;++i){
+#pragma omp critical
+            cnt++;
             Eigen::Matrix3f model_lrf_Or;
             Eigen::Matrix3f model_lrf_Ot;
             Eigen::Matrix3f scene_lrf_Or;
@@ -469,6 +473,7 @@ void PPFRegistration::compute() {
   }
 
 #pragma omp barrier
+
 /*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
@@ -494,6 +499,9 @@ void PPFRegistration::compute() {
   std::cout << "\n完成match阶段用时为： "
             << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp2 - tp1)
                    .count()<<"毫秒\n";
+
+
+  std::cout<<"scene中共匹配"<<cnt<<"对PPF特征"<<std::endl;
   //int success = 0;
   key_ final_key(-1, -1, -1);
   int max_vote = 0;

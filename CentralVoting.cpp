@@ -102,8 +102,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
 }
 void CentralVoting::Solve() {
     std::cout << "scene降采样开始： " << std::endl;
-   this->scene_subsampled = DownSample(scene);
-  // this->scene_subsampled = subsampleAndCalculateNormals(scene);
+    this->scene_subsampled = DownSample(scene);
+   //this->scene_subsampled = subsampleAndCalculateNormals(scene);
   //Eigen::Vector4f center;
   //pcl::compute3DCentroid(*scene, center);
   // this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200,
@@ -120,7 +120,7 @@ void CentralVoting::Solve() {
      //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
      //subsampleAndCalculateNormals(model_set[i]);
     //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-     //   subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
+       // subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
     cloud_models_with_normal.push_back(model_with_normal);
     /**
      * 可视化法线
