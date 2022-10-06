@@ -146,12 +146,12 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Affine3f &T) {
 decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   pcl::PointCloud<pcl::PointNormal>::Ptr temp =
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-  pcl::transformPointCloud(*this->hypo_model_cloud, *temp, T);
+  pcl::transformPointCloud(*this->model_cloud_with_normal, *temp, T);
   pcl::search::KdTree<pcl::PointNormal>::Ptr kdtree(
       new pcl::search::KdTree<pcl::PointNormal>());
   auto cnt = 0;
   double radius = 0.02 * this->d_obj;
-  kdtree->setInputCloud(this->hypo_scene_cloud);
+  kdtree->setInputCloud(this->scene_cloud_with_normal);
   std::vector<int> nan;
   pcl::PointCloud<pcl::PointNormal>::Ptr temp_ =
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
@@ -161,21 +161,22 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   for (auto i = 0; i < temp_->points.size(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
-    kdtree->radiusSearch(temp_->points[i], radius, indices, distance);
+    kdtree->nearestKSearch(temp_->points[i], 1, indices, distance);
     if (indices.empty()) {
       cnt += 0;
       continue;
     } else {
       int num = indices.size();
+
       for (auto j = 0; j < indices.size(); ++j) {
+        auto dis = distance[j];
         if (pcl::getAngle3D(
                 static_cast<const Eigen::Vector3f>(
-                    hypo_scene_cloud->points[indices[j]].normal),
+                    scene_cloud_with_normal->points[indices[j]].normal),
                 static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
-                true) < 25) {
+                true) <= 25 && dis<=radius) {
           num++;
         } else {
-          num--;
           continue;
         }
       }
@@ -518,11 +519,11 @@ void PPFRegistration::compute() {
       if (isnan(T_mean(0, 0))) {
         continue;
       }
-      //auto cnt = HypoVerification(T_mean);
+      auto cnt = HypoVerification(T_mean);
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, i.second.value);//提高假设检验后投票占比
+      struct data node(temp_, i.second.value+cnt);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
