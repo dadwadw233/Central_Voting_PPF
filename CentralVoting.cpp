@@ -8,7 +8,7 @@
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
-  std::cout << "pcl函数计算质心结果" << std::endl << center<<std::endl;
+  //std::cout << "pcl函数计算质心结果" << std::endl << center<<std::endl;
   pcl::PointXYZ p;
   p.x = center(0);
   p.y = center(1);
@@ -21,8 +21,6 @@ void CentralVoting::CenterExtractor(int index) {
   pcl::PointXYZ min_point_AABB;
   pcl::PointXYZ max_point_AABB;
   feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-  std::cout << "min_point:\n" << min_point_AABB << std::endl
-            << "max_point:\n" << max_point_AABB << std::endl;
 
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> model_color(
       255, 255, 255);
@@ -33,7 +31,7 @@ void CentralVoting::CenterExtractor(int index) {
                            std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
   this->d_obj_set.push_back(static_cast<float>(d_obj));
-  std::cout << "\nd_obj: " << d_obj << std::endl;
+  std::cout << "\n模型体半径: " << d_obj << std::endl;
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
 
@@ -102,24 +100,10 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   sample_filter.setKSearch(this->k_point);
   return sample_filter.compute();
 }
-
-pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud, const float &step_, const float &angleThreshold_) const{
-  pcl::PointXYZ max_point, min_point;
-  GenerateBound(input_cloud, max_point, min_point);
-  SmartDownSample sample_filter(input_cloud,
-                                std::make_pair(min_point.x, max_point.x),
-                                std::make_pair(min_point.y, max_point.y),
-                                std::make_pair(min_point.z, max_point.z),
-                                step_, angleThreshold_, 0.01);
-  sample_filter.setIsdense(false);
-  sample_filter.setKSearch(this->k_point);
-  return sample_filter.compute();
-}
-
 void CentralVoting::Solve() {
-   this->scene_subsampled = DownSample(scene);
-  // this->scene_subsampled = subsampleAndCalculateNormals(scene);
+    std::cout << "scene降采样开始： " << std::endl;
+    this->scene_subsampled = DownSample(scene);
+   //this->scene_subsampled = subsampleAndCalculateNormals(scene);
   //Eigen::Vector4f center;
   //pcl::compute3DCentroid(*scene, center);
   // this->scene_subsampled = subsampleAndCalculateNormals(scene, center[0]+200,
@@ -128,6 +112,7 @@ void CentralVoting::Solve() {
       //scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::HashMap::Ptr> hashmap_search_vector;
+  std::cout << "model降采样开始： " << std::endl;
   for (auto i = 0; i < this->model_set.size(); i++) {
     //auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
@@ -135,7 +120,7 @@ void CentralVoting::Solve() {
      //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
      //subsampleAndCalculateNormals(model_set[i]);
     //pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
-     //   subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
+       // subsampleAndCalculateNormals(model_set[i], this->triple_set[i], true);
     cloud_models_with_normal.push_back(model_with_normal);
     /**
      * 可视化法线
@@ -159,7 +144,6 @@ void CentralVoting::Solve() {
           boost::this_thread::sleep(boost::posix_time::microseconds(1000));
         }
        **/
-    PCL_INFO("begin to establish ppf\n");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
         new pcl::PointCloud<pcl::PPFSignature>());
 
@@ -172,12 +156,10 @@ void CentralVoting::Solve() {
     hashmap_search_vector.push_back(hash_map);
   }
   // std::cout<<"time:"<<end-start<<std::endl;
-  PCL_INFO("finish ppf establish\n");
-
-  PCL_INFO("Registering models to scene ...\n");
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
+  PCL_INFO("registration阶段开始\n");
   Eigen::Matrix4f GT{};
   GT<<0.999126, 0.0369223, 0.0196902, -100.672,
             -0.0372036, 0.999209, 0.0140794, 171.854,
@@ -186,10 +168,6 @@ void CentralVoting::Solve() {
             auto tp1 = std::chrono::steady_clock::now();
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
-    pcl::PointCloud<pcl::PointNormal>::Ptr hypo_model = DownSample(model_set[model_i],40.0,30.0);
-    pcl::PointCloud<pcl::PointNormal>::Ptr hypo_scene = DownSample(model_set[model_i],40.0,30.0);
-    std::cout<<"用于假设检验的点云数量："<<std::endl<<"model: "<<hypo_model->points.size()
-    <<std::endl<<"scene: "<<hypo_scene->points.size()<<std::endl;
     ppf_registration.setSceneReferencePointSamplingRate(10);
     ppf_registration.setPositionClusteringThreshold(10);  //投票的体素网格的size
     ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
@@ -201,11 +179,9 @@ void CentralVoting::Solve() {
     ppf_registration.setDobj(this->d_obj_set[model_i]);
     ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI),
                                             0.05f);
-
-    ppf_registration.setHypoSource(hypo_model);
-    ppf_registration.setHypoTarget(hypo_scene);
     ppf_registration.setGroundTruthTransform(GT);
     ppf_registration.compute();
+    PCL_INFO("registration阶段完成\n");
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(
         new pcl::PointCloud<pcl::PointXYZ>());

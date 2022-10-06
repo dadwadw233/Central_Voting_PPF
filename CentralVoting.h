@@ -113,6 +113,7 @@ class CentralVoting {
   pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, const float x,
       const float y, const float z, const bool &reverse);
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr adaptiveDownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
 

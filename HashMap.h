@@ -59,9 +59,9 @@ struct HashKey {
 struct hash_cal {
   size_t operator()(Hash::HashKey k) const {
     return std::hash<int>()(k.k1) ^ (std::hash<int>()(k.k2) << 1) ^
-           (std::hash<int>()(k.k3) << 2) ^ (std::hash<int>()(k.k4) << 3) ^
-           (std::hash<int>()(k.k1) << 4) ^ (std::hash<int>()(k.k2) << 5) ^
-           (std::hash<int>()(k.k3) << 5) ^ (std::hash<int>()(k.k4) << 6);
+                     (std::hash<int>()(k.k3) << 2) ^ (std::hash<int>()(k.k4) << 3) ^
+                     (std::hash<int>()(k.k1) << 4) ^ (std::hash<int>()(k.k2) << 5) ^
+                     (std::hash<int>()(k.k3) << 5) ^ (std::hash<int>()(k.k4) << 6);
     // return std::hash<int>()(k.k1);
   }
 };

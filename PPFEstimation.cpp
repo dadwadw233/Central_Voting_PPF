@@ -23,11 +23,11 @@ void PPFEstimation::compute(
   Eigen::Vector3f delta{};
 
   auto tp1 = std::chrono::steady_clock::now();
-
+  int cnt = 0;
   for (auto i = 0; i < input_point_normal->size(); i+=10) {
-#pragma omp parallel shared(input_point_normal, output_cloud, hash_map, cout, \
+#pragma omp parallel shared(cnt, input_point_normal, output_cloud, hash_map, cout, \
                             i) private(feature, data, p1, p2, n1, n2,         \
-                                       delta) default(none)
+                                       delta) default(none) num_threads(15)
     {
 #pragma omp for
       for (auto j = 0; j < input_point_normal->size(); ++j) {
@@ -114,6 +114,9 @@ void PPFEstimation::compute(
 
 #pragma omp critical
           output_cloud->points.push_back(feature);
+
+#pragma omp critical
+          cnt++;
         }
       }
     }
@@ -124,6 +127,7 @@ void PPFEstimation::compute(
             << std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1)
                    .count()
             << "ms to process PPF" << std::endl;
+  std::cout<<"model中共建立"<<cnt<<"对PPF特征"<<std::endl;
 }
 
 void PPFEstimation::setDiscretizationSteps(

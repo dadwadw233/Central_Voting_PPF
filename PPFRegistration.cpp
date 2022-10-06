@@ -157,15 +157,12 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
   temp_->is_dense = false;
   pcl::removeNaNFromPointCloud(*temp, *temp_, nan);
-#pragma omp parallel for shared(temp, radius, cnt, kdtree, \
-                                temp_) default(none) num_threads(15)
+
   for (auto i = 0; i < temp_->points.size(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
-#pragma omp critical
     kdtree->radiusSearch(temp_->points[i], radius, indices, distance);
     if (indices.empty()) {
-#pragma omp critical
       cnt += 0;
       continue;
     } else {
@@ -183,16 +180,12 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
         }
       }
       if (num > 0) {
-#pragma omp critical
         cnt+=num;
       } else {
-#pragma omp critical
         cnt --;
       }
     }
   }
-
-#pragma omp barrier
   return cnt;
 }
 template <class T>
@@ -218,7 +211,6 @@ void PPFRegistration::compute() {
   auto z_num = static_cast<long long int>(
       std::ceil(zr / this->clustering_position_diff_threshold));
 
-  PCL_INFO("初始化完成\n");
   pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector3f p1{};
@@ -228,13 +220,14 @@ void PPFRegistration::compute() {
   Eigen::Vector3f delta{};
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
-  std::cout << "finish Registering init" << std::endl;
-  std::cout << "computing ..." << std::endl;
+  std::cout << "online初始化完成" << std::endl;
+  std::cout << "Registering ..." << std::endl;
   auto tp1 = boost::chrono::steady_clock::now();
+  int cnt = 0;
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); i+=10) {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
-    scene_reference_point_sampling_rate,cout) private(p1, p2, n1, n2, delta,       \
+    scene_reference_point_sampling_rate,cout,cnt) private(p1, p2, n1, n2, delta,       \
                                                  feature, data) default(none) \
     num_threads(15)
     for (auto j = 0; j < scene_cloud_with_normal->points.size(); ++j) {
@@ -311,11 +304,14 @@ void PPFRegistration::compute() {
         data.second.r = scene_cloud_with_normal->points[i];
         data.second.t = scene_cloud_with_normal->points[j];
         if (searchMap->find(data.first)) {
+
           auto model_lrf = this->searchMap->getData(data.first);
           auto same_k = this->searchMap->getSameKeyNum(data.first);
 
 
           for(size_t i = 0;i<same_k;++i){
+#pragma omp critical
+            cnt++;
             Eigen::Matrix3f model_lrf_Or;
             Eigen::Matrix3f model_lrf_Ot;
             Eigen::Matrix3f scene_lrf_Or;
@@ -467,17 +463,14 @@ void PPFRegistration::compute() {
             this->vote(key_1, transform_1);
 #pragma omp critical
             this->vote(key_2, transform_2);
-
             model_lrf++;
           }
-
         } else {
           continue;
         }
       }
     }
   }
-
 #pragma omp barrier
 /*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
@@ -504,7 +497,10 @@ void PPFRegistration::compute() {
   std::cout << "\n完成match阶段用时为： "
             << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp2 - tp1)
                    .count()<<"毫秒\n";
-  int success = 0;
+
+
+  std::cout<<"scene中共匹配"<<cnt<<"对PPF特征"<<std::endl;
+  //int success = 0;
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if (this->map_.empty()) {
@@ -522,11 +518,11 @@ void PPFRegistration::compute() {
       if (isnan(T_mean(0, 0))) {
         continue;
       }
-      auto cnt = HypoVerification(T_mean);
+      //auto cnt = HypoVerification(T_mean);
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, cnt+i.second.value);
+      struct data node(temp_, i.second.value);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
@@ -539,15 +535,16 @@ void PPFRegistration::compute() {
     std::cout << "\n完成假设检验阶段用时为： "
               << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp3 - tp2)
                      .count()<<"毫秒\n";
-    std::cout<<"success T num:"<<success<<std::endl;
-    std::cout << "final vote: " << max_vote << std::endl;
+    //std::cout<<"success T num:"<<success<<std::endl;
+    std::cout << "最高投票数: " << max_vote << std::endl;
     while (isnan(T_queue.top().T(0, 0))) {
       T_queue.pop();
     }
-    std::cout << "max value: " << T_queue.top().value << std::endl;
+    std::cout << "假设检验后得分: " << T_queue.top().value << std::endl;
     this->finalTransformation = T_queue.top().T;
-    std::cout << "transform matrix: " << std::endl
-              << this->finalTransformation.matrix();
+    std::cout << "T: " << std::endl
+              << this->finalTransformation.matrix()
+              << std::endl;
 
     /****************/
 /*
