@@ -5,9 +5,7 @@
 #include "SmartDownSample.h"
 #include <omp.h>
 pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
-  std::cout << "before down sample" << this->input_cloud->points.size();
-  PCL_INFO("\nstart to compute\n");
-  PCL_INFO("\nstart to calculate normal\n");
+  std::cout << "输入点云数量: " << this->input_cloud->points.size() <<std::endl;
   pcl::PointCloud<pcl::Normal>::Ptr normal(new pcl::PointCloud<pcl::Normal>());
 //计算所有点的表面法线
   pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
@@ -40,13 +38,11 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
       new pcl::PointCloud<pcl::PointNormal>());
   concatenateFields(*this->input_cloud, *normal, *cloud_with_normals);
 #pragma omp barrier
-  PCL_INFO("\nfinish normal calculation\n");
   pcl::PointCloud<pcl::PointNormal>::Ptr output_cloud(
       new pcl::PointCloud<pcl::PointNormal>());
 
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr>
       map;  // define the voxel grid , store the index of the point in cloud
-  PCL_INFO("\nstart map init\n");
 
   auto xr =
       std::abs(static_cast<float>(this->x_range.second - this->x_range.first));
@@ -71,7 +67,6 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
   }
 
 #pragma omp barrier
-  PCL_INFO("\nfinish voxel init\n");
 
 #pragma omp parallel for shared(map, x_num, y_num, cloud_with_normals, \
                                 cout) default(none) num_threads(15)
@@ -105,7 +100,6 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
 
 #pragma omp barrier
 
-  PCL_INFO("\nfinish store point\n");
 
 #pragma omp parallel for shared(map, output_cloud, cout) default(none) \
     num_threads(15)
@@ -159,8 +153,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
       }
     }
   }
-  PCL_INFO("\ndown sample finish\n");
-  std::cout << "after down sample" << output_cloud->points.size() << std::endl;
+  std::cout << "采样点云数量： " << output_cloud->points.size() << std::endl;
   return output_cloud;
 }
 void SmartDownSample::setIsdense(const bool &data) { this->isdense = data; }

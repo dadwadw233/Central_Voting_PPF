@@ -8,7 +8,7 @@
 void CentralVoting::CenterExtractor(int index) {
   Eigen::Vector4f center;
   pcl::compute3DCentroid(*this->model_set[index], center);
-  std::cout << "pcl函数计算质心结果" << std::endl << center<<std::endl;
+  //std::cout << "pcl函数计算质心结果" << std::endl << center<<std::endl;
   pcl::PointXYZ p;
   p.x = center(0);
   p.y = center(1);
@@ -21,8 +21,6 @@ void CentralVoting::CenterExtractor(int index) {
   pcl::PointXYZ min_point_AABB;
   pcl::PointXYZ max_point_AABB;
   feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-  std::cout << "min_point:\n" << min_point_AABB << std::endl
-            << "max_point:\n" << max_point_AABB << std::endl;
 
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> model_color(
       255, 255, 255);
@@ -33,7 +31,7 @@ void CentralVoting::CenterExtractor(int index) {
                            std::pow(max_point_AABB.y - min_point_AABB.y, 2) +
                            std::pow(max_point_AABB.z - min_point_AABB.z, 2));
   this->d_obj_set.push_back(static_cast<float>(d_obj));
-  std::cout << "\nd_obj: " << d_obj << std::endl;
+  std::cout << "\n模型体半径: " << d_obj << std::endl;
   p_faux.x -= static_cast<float>(d_obj);
   p_saux.y -= static_cast<float>(d_obj);
 
@@ -103,30 +101,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   return sample_filter.compute();
 }
 void CentralVoting::Solve() {
-
-  pcl::SACSegmentation<pcl::PointXYZ> seg;
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  seg.setOptimizeCoefficients(true);
-  seg.setModelType(pcl::SACMODEL_PLANE);
-  seg.setMethodType(pcl::SAC_RANSAC);//ransac做点云分割，提取平面
-  seg.setMaxIterations(1000);
-  seg.setDistanceThreshold(0.05);
-  extract.setNegative(true);
-  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
-  pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-  const auto nr_points = scene->size();
-  while (scene->size() > 0.3 * nr_points) {
-    seg.setInputCloud(scene);
-    seg.segment(*inliers, *coefficients);
-    PCL_INFO("Plane inliers: %zu\n",
-             static_cast<std::size_t>(inliers->indices.size())); if
-        (inliers->indices.size() < 50000) break;
-
-    extract.setInputCloud(scene);
-    extract.setIndices(inliers);
-    extract.filter(*scene);
-  }
-
+    std::cout << "scene降采样开始： " << std::endl;
    this->scene_subsampled = DownSample(scene);
   // this->scene_subsampled = subsampleAndCalculateNormals(scene);
   //Eigen::Vector4f center;
@@ -137,6 +112,7 @@ void CentralVoting::Solve() {
       //scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<Hash::HashMap::Ptr> hashmap_search_vector;
+  std::cout << "model降采样开始： " << std::endl;
   for (auto i = 0; i < this->model_set.size(); i++) {
     //auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
@@ -168,7 +144,6 @@ void CentralVoting::Solve() {
           boost::this_thread::sleep(boost::posix_time::microseconds(1000));
         }
        **/
-    PCL_INFO("begin to establish ppf\n");
     pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
         new pcl::PointCloud<pcl::PPFSignature>());
 
@@ -181,12 +156,10 @@ void CentralVoting::Solve() {
     hashmap_search_vector.push_back(hash_map);
   }
   // std::cout<<"time:"<<end-start<<std::endl;
-  PCL_INFO("finish ppf establish\n");
-
-  PCL_INFO("Registering models to scene ...\n");
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
+  PCL_INFO("registration阶段开始\n");
   Eigen::Matrix4f GT{};
   GT<<0.999126, 0.0369223, 0.0196902, -100.672,
             -0.0372036, 0.999209, 0.0140794, 171.854,
@@ -208,6 +181,7 @@ void CentralVoting::Solve() {
                                             0.05f);
     ppf_registration.setGroundTruthTransform(GT);
     ppf_registration.compute();
+    PCL_INFO("registration阶段完成\n");
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(
         new pcl::PointCloud<pcl::PointXYZ>());

@@ -166,7 +166,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
                 static_cast<const Eigen::Vector3f>(
                     scene_cloud_with_normal->points[indices[j]].normal),
                 static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
-                true) < 25) {
+                true) < 15) {
           num++;
         } else {
           num--;
@@ -209,7 +209,6 @@ void PPFRegistration::compute() {
   auto z_num = static_cast<long long int>(
       std::ceil(zr / this->clustering_position_diff_threshold));
 
-  PCL_INFO("初始化完成\n");
   pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector3f p1{};
@@ -219,8 +218,8 @@ void PPFRegistration::compute() {
   Eigen::Vector3f delta{};
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene(
       new pcl::PointCloud<pcl::PointXYZ>());
-  std::cout << "finish Registering init" << std::endl;
-  std::cout << "computing ..." << std::endl;
+  std::cout << "online初始化完成" << std::endl;
+  std::cout << "Registering ..." << std::endl;
   auto tp1 = boost::chrono::steady_clock::now();
   for (auto i = 0; i < scene_cloud_with_normal->points.size(); i+=10) {
 #pragma omp parallel for shared(                                              \
@@ -495,7 +494,7 @@ void PPFRegistration::compute() {
   std::cout << "\n完成match阶段用时为： "
             << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp2 - tp1)
                    .count()<<"毫秒\n";
-  int success = 0;
+  //int success = 0;
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if (this->map_.empty()) {
@@ -517,7 +516,7 @@ void PPFRegistration::compute() {
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, cnt+i.second.value);
+      struct data node(temp_, cnt+i.second.value*10);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
@@ -530,15 +529,16 @@ void PPFRegistration::compute() {
     std::cout << "\n完成假设检验阶段用时为： "
               << boost::chrono::duration_cast<boost::chrono::milliseconds>(tp3 - tp2)
                      .count()<<"毫秒\n";
-    std::cout<<"success T num:"<<success<<std::endl;
-    std::cout << "final vote: " << max_vote << std::endl;
+    //std::cout<<"success T num:"<<success<<std::endl;
+    std::cout << "最高投票数: " << max_vote << std::endl;
     while (isnan(T_queue.top().T(0, 0))) {
       T_queue.pop();
     }
-    std::cout << "max value: " << T_queue.top().value << std::endl;
+    std::cout << "假设检验后得分: " << T_queue.top().value << std::endl;
     this->finalTransformation = T_queue.top().T;
-    std::cout << "transform matrix: " << std::endl
-              << this->finalTransformation.matrix();
+    std::cout << "T: " << std::endl
+              << this->finalTransformation.matrix()
+              << std::endl;
 
     /****************/
 /*

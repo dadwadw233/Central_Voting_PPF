@@ -78,10 +78,6 @@ class CentralVoting {
 
   void Solve();
 
-  void EstablishHashMap();
-
-  void EstablishLRF();
-
   void test();  //测试入口函数
 
   void setNormalEstimationRadius(const float &radius);
@@ -114,6 +110,7 @@ class CentralVoting {
   pcl::PointCloud<pcl::PointNormal>::Ptr subsampleAndCalculateNormals(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud, const float x,
       const float y, const float z, const bool &reverse);
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr adaptiveDownSample(
       const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud);
 
