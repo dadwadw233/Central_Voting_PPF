@@ -148,15 +148,12 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
       boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
   temp_->is_dense = false;
   pcl::removeNaNFromPointCloud(*temp, *temp_, nan);
-#pragma omp parallel for shared(temp, radius, cnt, kdtree, \
-                                temp_) default(none) num_threads(1)
+
   for (auto i = 0; i < temp_->points.size(); i++) {
     std::vector<int> indices;
     std::vector<float> distance;
-#pragma omp critical
     kdtree->radiusSearch(temp_->points[i], radius, indices, distance);
     if (indices.empty()) {
-#pragma omp critical
       cnt += 0;
       continue;
     } else {
@@ -166,7 +163,7 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
                 static_cast<const Eigen::Vector3f>(
                     scene_cloud_with_normal->points[indices[j]].normal),
                 static_cast<const Eigen::Vector3f>(temp_->points[i].normal),
-                true) < 15) {
+                true) < 25) {
           num++;
         } else {
           num--;
@@ -174,16 +171,12 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
         }
       }
       if (num > 0) {
-#pragma omp critical
         cnt+=num;
       } else {
-#pragma omp critical
         cnt --;
       }
     }
   }
-
-#pragma omp barrier
   return cnt;
 }
 template <class T>
@@ -461,19 +454,15 @@ void PPFRegistration::compute() {
             this->vote(key_1, transform_1);
 #pragma omp critical
             this->vote(key_2, transform_2);
-
             model_lrf++;
           }
-
         } else {
           continue;
         }
       }
     }
   }
-
 #pragma omp barrier
-
 /*
   pcl::PointCloud<pcl::PointXYZ>::Ptr triple(
       new pcl::PointCloud<pcl::PointXYZ>());
@@ -524,7 +513,7 @@ void PPFRegistration::compute() {
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, cnt+i.second.value*10);//提高假设检验后投票占比
+      struct data node(temp_, cnt+i.second.value);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;

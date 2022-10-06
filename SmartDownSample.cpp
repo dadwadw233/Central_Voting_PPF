@@ -58,12 +58,10 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
 
   map.resize(x_num * y_num * z_num);
 
-    for (int i = 0; i < map.size(); i++) {
-      map[i].reset(new pcl::PointCloud<pcl::PointNormal>());
-    }
+  for (int i = 0; i < map.size(); i++) {
+    map[i].reset(new pcl::PointCloud<pcl::PointNormal>());
+  }
 
-//#pragma omp parallel for shared(map, x_num, y_num, cloud_with_normals, \
-                                cout) default(none) num_threads(1)
   for (int i = 0; i < this->input_cloud->points.size();
        i++) {  //遍历所有点，分配至对应cell
     const int xCell =
@@ -88,11 +86,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
     const int index = (xCell - 1) + (yCell - 1) * x_num +
                       (zCell - 1) * x_num * y_num;  //确定点所在的cell的index
 
-//#pragma omp critical
     map[index]->points.push_back(cloud_with_normals->points[i]);
   }
-
-//#pragma omp barrier
 
 #pragma omp parallel for shared(map, output_cloud, cout) default(none) \
     num_threads(15)
@@ -116,7 +111,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
                     static_cast<Eigen::Vector3f>(
                         cluster[cluster_index][point_index].normal),
                     static_cast<Eigen::Vector3f>(map[i]->points[j].normal),
-                    true) <= this->angleThreshold) {//角度小于阈值，进行合并聚类操作
+                    true) <=
+                this->angleThreshold) {  //角度小于阈值，进行合并聚类操作
               continue;
             } else {
               flag = false;
@@ -148,24 +144,21 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
         } else {
           auto Mean = getMeanPointNormal(cluster[cluster_index]);
 #pragma omp critical
-          this->q.push(data(i,cluster_index,Mean));
+          this->q.push(data(i, cluster_index, Mean));
         }
       }
     }
   }
 
-
 #pragma omp barrier
 
-  while(!q.empty()){
+  while (!q.empty()) {
     output_cloud->points.push_back(q.top().Mean);
     q.pop();
   }
   std::cout << "采样点云数量： " << output_cloud->points.size() << std::endl;
   return output_cloud;
 }
-
-
 
 void SmartDownSample::setIsdense(const bool &data) { this->isdense = data; }
 void SmartDownSample::setRadius(float data) {

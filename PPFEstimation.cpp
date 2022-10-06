@@ -24,7 +24,7 @@ void PPFEstimation::compute(
 
   auto tp1 = std::chrono::steady_clock::now();
   int cnt = 0;
-  for (auto i = 0; i < input_point_normal->size(); i++) {
+  for (auto i = 0; i < input_point_normal->size(); i+=10) {
 #pragma omp parallel shared(cnt, input_point_normal, output_cloud, hash_map, cout, \
                             i) private(feature, data, p1, p2, n1, n2,         \
                                        delta) default(none) num_threads(15)
