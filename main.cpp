@@ -13,6 +13,8 @@ int main(int argc, char** argv) {
     PCL_ERROR("need pcd file as input\n");
     return -1;
   }
+  float a,b;
+  cin>>a>>b;
   pcl::PointCloud<pcl::PointXYZ>::Ptr model(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene(
@@ -40,8 +42,9 @@ int main(int argc, char** argv) {
   CentralVoting handle(scene, model);
   handle.CenterExtractorAll();
   handle.setNormalEstimationRadius(4.0f);
-  handle.setDownSampleStep(30.0f);
-  handle.setAngleThreshold(20);
+
+  handle.setDownSampleStep(a);
+  handle.setAngleThreshold(b);
   handle.setSimpleDownSampleLeaf(Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000, 4.0f);
   //handle.test();
