@@ -189,11 +189,58 @@ decltype(auto) PPFRegistration::HypoVerification(const Eigen::Matrix4f &T) {
   }
   return cnt;
 }
+
 template <class T>
-float calculateDistance(T &pointA, T &pointB) {
+float PPFRegistration::calculateDistance(T &pointA, T &pointB) {
   return sqrt(pow(pointA[0] - pointB[0], 2) + pow(pointA[1] - pointB[1], 2) +
               pow(pointA[2] - pointB[2], 2));
 }
+
+template <class T>
+float PPFRegistration::calculateDistanceP(T &pointA, T &pointB){
+  return sqrt(pow(pointA.x - pointB.x, 2) + pow(pointA.y - pointB.y, 2) +
+              pow(pointA.z - pointB.z, 2));
+}
+
+
+
+decltype(auto) PPFRegistration::ICVRHypoVerification(const Eigen::Matrix4f &T) {
+  Eigen::Affine3f T_{T};
+  Eigen::Vector4f center;
+  pcl::compute3DCentroid(*model_cloud_with_normal, center);
+  pcl::PointNormal c{};//获取center
+  c.x = center[0];
+  c.y = center[1];
+  c.z = center[2];
+  pcl::PointCloud<pcl::PointNormal>::Ptr temp =
+      boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+  pcl::transformPointCloud(*this->model_cloud_with_normal, *temp, T);
+  pcl::compute3DCentroid(*temp, center);
+  pcl::PointNormal c_{};//获取center
+  c_.x = center[0];
+  c_.y = center[1];
+  c_.z = center[2];
+  std::vector<float> dislist{};
+
+  for(auto i : model_cloud_with_normal->points){
+    dislist.push_back(calculateDistanceP(i, c));
+  }
+  std::sort(dislist.begin(), dislist.end());
+  auto radius = dislist[std::ceil(dislist.size()/2)];
+  std::cout<<radius<<std::endl;
+  pcl::search::KdTree<pcl::PointNormal>::Ptr tree = boost::make_shared<pcl::search::KdTree<pcl::PointNormal>>();
+
+  tree->setInputCloud(this->scene_cloud_with_normal);
+  std::vector<int> indices;
+  std::vector<float> distance;
+  tree->radiusSearch(c_, radius, indices,distance);
+  auto n = static_cast<float>(indices.size());
+  auto N = static_cast<float>(this->model_cloud_with_normal->points.size());
+  auto score = n/N;
+  return score;
+}
+
+
 void PPFRegistration::compute() {
   // pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene =
   // boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -377,7 +424,7 @@ void PPFRegistration::compute() {
             model_center << triple_set[0].x, triple_set[0].y, triple_set[0].z;
             pcl::transformPoint(model_center, hypo_center, transform_1);
             pcl::transformPoint(model_center, hypo_center_, transform_2);
-            if (::calculateDistance(hypo_center, hypo_center_) > 100) {
+            if (calculateDistance(hypo_center, hypo_center_) > 100) {
               continue;
             }
             std::vector<int> index_1, index_2;
@@ -519,11 +566,11 @@ void PPFRegistration::compute() {
       if (isnan(T_mean(0, 0))) {
         continue;
       }
-      auto cnt = HypoVerification(T_mean);
+      auto score = ICVRHypoVerification(T_mean);
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, i.second.value+cnt);//提高假设检验后投票占比
+      struct data node(temp_, score);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;

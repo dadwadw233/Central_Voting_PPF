@@ -118,8 +118,8 @@ class PPFRegistration {
   };
   struct data {
     Eigen::Affine3f T;
-    int value;
-    data(const Eigen::Affine3f &T_, const int &value_) : T(T_), value(value_) {}
+    float value;
+    data(const Eigen::Affine3f &T_, const float &value_) : T(T_), value(value_) {}
   };
   struct cmp {
     bool operator()(data a, data b) {
@@ -137,8 +137,14 @@ class PPFRegistration {
 
   decltype(auto) HypoVerification(const Eigen::Matrix4f &T);
 
+  decltype(auto) ICVRHypoVerification(const Eigen::Matrix4f &T);
+
   template <class T>
   float calculateDistance(T &pointA, T &pointB);
+
+  template <class T>
+  float calculateDistanceP(T &pointA, T &pointB);
+
 
   decltype(auto) getMeanMatrix(const data_ &data) {
     Eigen::Quaternionf averQ {};
