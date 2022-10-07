@@ -227,7 +227,7 @@ decltype(auto) PPFRegistration::ICVRHypoVerification(const Eigen::Matrix4f &T) {
   }
   std::sort(dislist.begin(), dislist.end());
   auto radius = dislist[std::ceil(dislist.size()/2)];
-  std::cout<<radius<<std::endl;
+  //std::cout<<radius<<std::endl;
   pcl::search::KdTree<pcl::PointNormal>::Ptr tree = boost::make_shared<pcl::search::KdTree<pcl::PointNormal>>();
 
   tree->setInputCloud(this->scene_cloud_with_normal);
@@ -235,7 +235,7 @@ decltype(auto) PPFRegistration::ICVRHypoVerification(const Eigen::Matrix4f &T) {
   std::vector<float> distance;
   tree->radiusSearch(c_, radius, indices,distance);
   auto n = static_cast<float>(indices.size());
-  auto N = static_cast<float>(this->model_cloud_with_normal->points.size());
+  auto N = static_cast<float>(this->model_cloud_with_normal->points.size()/2);
   auto score = n/N;
   return score;
 }
