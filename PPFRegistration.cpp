@@ -251,13 +251,19 @@ void PPFRegistration::compute() {
         }*/
         // normalize
         delta /= f4;
-
+/*
         float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
 
         float f2 = n1[0] * delta[0] + n2[1] * delta[1] + n2[2] * delta[2];
 
         float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
 
+ */
+        float f1 = atan2(delta.cross(n1).norm(),delta.dot(n1));
+
+        float f2 = atan2(delta.cross(n2).norm(),delta.dot(n2));
+
+        float f3 = atan2(n1.cross(n2).norm(),n1.dot(n2));
         /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  *
         delta.z();
 
@@ -572,18 +578,18 @@ void PPFRegistration::compute() {
 */
   /*visualize*/
 /*
-    std::cout << "\ntriple size: " << temp->size() << std::endl;
+    //std::cout << "\ntriple size: " << temp->size() << std::endl;
     std::cout<<"Transform size: "<<this->map_.size()<<std::endl;
 
     pcl::visualization::PCLVisualizer view("subsampled point cloud");
     view.setBackgroundColor(0, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-        triple, 255, 0, 0);
+        triple_scene, 255, 0, 0);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
         scene_cloud_with_normal, 255, 0, 255);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> green(
         model_cloud_with_normal, 0, 255, 0);
-    view.addPointCloud(triple, red, "triple");
+    view.addPointCloud(triple_scene, red, "triple");
     view.addPointCloud(model_cloud_with_normal, green, "model");
     view.setPointCloudRenderingProperties(
         pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "triple");

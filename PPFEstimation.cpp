@@ -64,14 +64,19 @@ void PPFEstimation::compute(
                     }*/
           // std::cout<<f4<<std::endl;
           // normalize
-          delta /= f4;
-
+          delta.normalize();
+           /*
           float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
 
           float f2 = n1[0] * delta[0] + n2[1] * delta[1] + n2[2] * delta[2];
 
           float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
+          */
+          float f1 = atan2(delta.cross(n1).norm(),delta.dot(n1));
 
+          float f2 = atan2(delta.cross(n2).norm(),delta.dot(n2));
+
+          float f3 = atan2(n1.cross(n2).norm(),n1.dot(n2));
           /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  *
           delta.z();
 

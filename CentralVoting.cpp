@@ -149,7 +149,7 @@ void CentralVoting::Solve() {
 
     Hash::HashMap::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
-    ppf_estimator.setDiscretizationSteps(12.0f / 180.0f * float(M_PI), 0.05f);
+    ppf_estimator.setDiscretizationSteps(6.0f / 180.0f * float(M_PI), 0.05f);
     // start = clock();
     ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
 
@@ -169,15 +169,15 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(10);  //投票的体素网格的size
-    ppf_registration.setRotationClusteringThreshold(30.0f / 180.0f *
+    ppf_registration.setPositionClusteringThreshold(20);  //投票的体素网格的size
+    ppf_registration.setRotationClusteringThreshold(6.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
     ppf_registration.setInputSource(cloud_models_with_normal[model_i]);
     ppf_registration.setInputTarget(this->scene_subsampled);
     ppf_registration.setModelTripleSet(this->triple_set[model_i]);
     ppf_registration.setDobj(this->d_obj_set[model_i]);
-    ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI),
+    ppf_registration.setDiscretizationSteps(6.0f / 180.0f * float(M_PI),
                                             0.05f);
     ppf_registration.setGroundTruthTransform(GT);
     ppf_registration.compute();
