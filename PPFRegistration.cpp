@@ -504,6 +504,7 @@ void PPFRegistration::compute() {
     std::cout << "no ans" << std::endl;
   } else {
     for (const auto &i : this->map_) {
+      if(i.second.value<=3) continue;
       /*for(const auto &j:i.second.T_set){
         double RE,TE;
         if(evaluation_est(j.matrix(),this->gt,15,20,RE,TE)){
@@ -515,11 +516,11 @@ void PPFRegistration::compute() {
       if (isnan(T_mean(0, 0))) {
         continue;
       }
-      //auto cnt = HypoVerification(T_mean);
+      auto cnt = HypoVerification(T_mean);
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, i.second.value);//提高假设检验后投票占比
+      struct data node(temp_, cnt+i.second.value);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
