@@ -503,8 +503,10 @@ void PPFRegistration::compute() {
   if (this->map_.empty()) {
     std::cout << "no ans" << std::endl;
   } else {
-    for (const auto &i : this->map_) {
-      if(i.second.value<=3) continue;
+    std::vector<std::pair<key_, data_>>v(map_.begin(), map_.end());
+    std::sort(v.begin(), v.end(),[](std::pair<key_,data_>a, std::pair<key_,data_>b){return a.second.value>b.second.value;});
+    for (const auto &i : v) {
+      if(i.second.value<=v[0].second.value/1.2) continue;
       /*for(const auto &j:i.second.T_set){
         double RE,TE;
         if(evaluation_est(j.matrix(),this->gt,15,20,RE,TE)){
