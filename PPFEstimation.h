@@ -27,7 +27,7 @@ class PPFEstimation {
                 std::vector<std::vector<std::vector<Hash::HashData>>>(
                     Na, std::vector<std::vector<Hash::HashData>>(
                             Na, std::vector<Hash::HashData>(
-                                    0, Hash::HashData{})))));  //产生静态数组
+                                    0)))));  //产生静态数组
 
     // Hash::HashData data;
     // Hash::HashKey key;
