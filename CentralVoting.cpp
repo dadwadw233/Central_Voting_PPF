@@ -111,7 +111,8 @@ void CentralVoting::Solve() {
   //this->scene_subsampled = subsampleAndCalculateNormals(
       //scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
-  std::vector<Hash::HashMap::Ptr> hashmap_search_vector;
+  std::vector<std::vector<
+      std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>>> hashmap_search_vector;
   std::cout << "model降采样开始： " << std::endl;
   for (auto i = 0; i < this->model_set.size(); i++) {
     //auto model_cloud = SimpleDownSample(model_set[i]);
@@ -144,18 +145,14 @@ void CentralVoting::Solve() {
           boost::this_thread::sleep(boost::posix_time::microseconds(1000));
         }
        **/
-    pcl::PointCloud<pcl::PPFSignature>::Ptr cloud_model_ppf(
-        new pcl::PointCloud<pcl::PPFSignature>());
-
-    Hash::HashMap::Ptr hash_map = boost::make_shared<Hash::HashMap>();
     PPFEstimation ppf_estimator;
     ppf_estimator.setDiscretizationSteps(6.0f / 180.0f * float(M_PI), 0.05f);
+    ppf_estimator.setDobj(this->d_obj_set[i]);
     // start = clock();
-    ppf_estimator.compute(model_with_normal, cloud_model_ppf, hash_map);
+    auto PPF_map = ppf_estimator.compute(model_with_normal);
 
-    hashmap_search_vector.push_back(hash_map);
+    hashmap_search_vector.push_back(PPF_map);
   }
-  // std::cout<<"time:"<<end-start<<std::endl;
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
