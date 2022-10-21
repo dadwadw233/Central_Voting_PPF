@@ -31,7 +31,7 @@ class PPFRegistration {
   void setRotationClusteringThreshold(
       const float &clustering_rotation_diff_threshold);
 
-  void setSearchMap(const PPF::searchMapType &searchMap);
+  void setSearchMap(PPF::searchMapType& searchMap);
 
   void setInputSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 

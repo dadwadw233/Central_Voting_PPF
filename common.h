@@ -8,6 +8,8 @@
 #include "HashMap.h"
 namespace PPF{
 typedef std::vector<std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>> searchMapType;
+typedef boost::shared_ptr<std::vector<
+    std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>>> searchMapTypePtr;
 }
 
 #endif  // CENTRAL_VOTING_COMMON_H

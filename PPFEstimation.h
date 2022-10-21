@@ -10,27 +10,15 @@
 #include "pcl/point_types.h"
 #include "chrono"
 #include "omp.h"
+#include "common.h"
 
 class PPFEstimation {
  public:
   PPFEstimation();
-  decltype(auto) compute(
-      const pcl::PointCloud<pcl::PointNormal>::Ptr &input_point_normal) {
+  void compute(
+      const pcl::PointCloud<pcl::PointNormal>::Ptr &input_point_normal, PPF::searchMapType &map) {
     std::pair<Hash::HashKey, Hash::HashData> data{};
-    int Nd = std::floor(this->dobj / this->distance_discretization_step) + 1;
-    int Na = std::floor(float(M_PI) / this->angle_discretization_step) + 1;
-    std::vector<
-        std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>>
-        map(Nd,
-            std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>(
-                Na,
-                std::vector<std::vector<std::vector<Hash::HashData>>>(
-                    Na, std::vector<std::vector<Hash::HashData>>(
-                            Na, std::vector<Hash::HashData>(
-                                    0)))));  //产生静态数组
 
-    // Hash::HashData data;
-    // Hash::HashKey key;
     Eigen::Vector3f p1{};
     Eigen::Vector3f p2{};
     Eigen::Vector3f n1{};
@@ -98,8 +86,10 @@ class PPFEstimation {
             data.second.t = input_point_normal->points[j];
 
 #pragma omp critical
-            map[data.first.k4][data.first.k1][data.first.k2][data.first.k3]
-                .push_back(data.second);
+              map[data.first.k4][data.first.k1][data.first.k2][data.first.k3]
+                  .push_back(data.second);
+
+
 
 #pragma omp critical
             cnt++;
@@ -107,6 +97,7 @@ class PPFEstimation {
         }
       }
     }
+
 #pragma omp barrier
     auto tp2 = std::chrono::steady_clock::now();
     std::cout << "need "
@@ -115,7 +106,6 @@ class PPFEstimation {
                      .count()
               << "ms to process PPF" << std::endl;
     std::cout << "model中共建立" << cnt << "对PPF特征" << std::endl;
-    return map;
   }
 
   void setDiscretizationSteps(const float &angle_discretization_step,

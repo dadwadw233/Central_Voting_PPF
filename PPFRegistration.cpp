@@ -32,7 +32,7 @@ void PPFRegistration::setInputSource(
     const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
   this->model_cloud_with_normal = cloud;
 }
-void PPFRegistration::setSearchMap(const PPF::searchMapType &searchMap) {
+void PPFRegistration::setSearchMap(PPF::searchMapType& searchMap) {
   this->searchMap = searchMap;
 }
 void PPFRegistration::setDiscretizationSteps(
@@ -236,20 +236,18 @@ void PPFRegistration::compute() {
         n2 << scene_cloud_with_normal->points[j].normal_x,
             scene_cloud_with_normal->points[j].normal_y,
             scene_cloud_with_normal->points[j].normal_z;
-
-        delta = p2 - p1;
+        delta = p2 - p1;  // pt-pr
         float f4 = delta.norm();
-        if (f4 > d_obj) {
+        if (f4 > this->d_obj) {
           continue;
         }
-        delta /= f4;
+        delta.normalize();
 
+        float f1 = atan2(delta.cross(n1).norm(), delta.dot(n1));
 
-        float f1 = atan2(delta.cross(n1).norm(),delta.dot(n1));
+        float f2 = atan2(delta.cross(n2).norm(), delta.dot(n2));
 
-        float f2 = atan2(delta.cross(n2).norm(),delta.dot(n2));
-
-        float f3 = atan2(n1.cross(n2).norm(),n1.dot(n2));
+        float f3 = atan2(n1.cross(n2).norm(), n1.dot(n2));
 
         data.second.Or = (std::make_pair(
             n1.cross(delta) / (n1.cross(delta)).norm(),
@@ -274,10 +272,10 @@ void PPFRegistration::compute() {
 
         data.second.r = scene_cloud_with_normal->points[i];
         data.second.t = scene_cloud_with_normal->points[j];
-        if (searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].size()!=0) {
+        if (!searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].empty()) {
 
-          auto model_lrf = this->searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].begin();
-          auto same_k = this->searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].size();
+          auto model_lrf = searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].begin();
+          auto same_k = searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].size();
 
 
           for(size_t i = 0;i<same_k;++i){

@@ -111,8 +111,7 @@ void CentralVoting::Solve() {
   //this->scene_subsampled = subsampleAndCalculateNormals(
       //scene, Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
-  std::vector<std::vector<
-      std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>>> hashmap_search_vector;
+  std::vector<PPF::searchMapType> hashmap_search_vector;
   std::cout << "model降采样开始： " << std::endl;
   for (auto i = 0; i < this->model_set.size(); i++) {
     //auto model_cloud = SimpleDownSample(model_set[i]);
@@ -149,14 +148,28 @@ void CentralVoting::Solve() {
     ppf_estimator.setDiscretizationSteps(6.0f / 180.0f * float(M_PI), 0.05f);
     ppf_estimator.setDobj(this->d_obj_set[i]);
     // start = clock();
-    auto PPF_map = ppf_estimator.compute(model_with_normal);
+    int Nd = std::floor(this->d_obj_set[i]/ 0.05f) + 1;
+    int Na = std::floor(float(M_PI) / (6.0f / 180.0f * float(M_PI))) + 1;
 
-    hashmap_search_vector.push_back(PPF_map);
+    PPF::searchMapType
+        PPF_map_(Nd,
+            std::vector<std::vector<std::vector<std::vector<Hash::HashData>>>>(
+                Na,
+                std::vector<std::vector<std::vector<Hash::HashData>>>(
+                    Na, std::vector<std::vector<Hash::HashData>>(
+                            Na, std::vector<Hash::HashData>(
+                                    0)))));  //产生静态数组
+
+
+    ppf_estimator.compute(model_with_normal,PPF_map_);
+
+    hashmap_search_vector.push_back(PPF_map_);
   }
 
   pcl::visualization::PCLVisualizer view("registration result");
   view.setBackgroundColor(0, 0, 0);
   PCL_INFO("registration阶段开始\n");
+
   Eigen::Matrix4f GT{};
   GT<<0.999126, 0.0369223, 0.0196902, -100.672,
             -0.0372036, 0.999209, 0.0140794, 171.854,
@@ -177,6 +190,8 @@ void CentralVoting::Solve() {
     ppf_registration.setDiscretizationSteps(6.0f / 180.0f * float(M_PI),
                                             0.05f);
     ppf_registration.setGroundTruthTransform(GT);
+    tp1 = std::chrono::steady_clock::now();
+
     ppf_registration.compute();
     PCL_INFO("registration阶段完成\n");
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
