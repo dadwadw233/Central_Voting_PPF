@@ -201,7 +201,6 @@ void PPFRegistration::compute() {
   auto z_num = static_cast<long long int>(
       std::ceil(zr / this->clustering_position_diff_threshold));
 
-  pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector3f p1{};
   Eigen::Vector3f p2{};
@@ -218,13 +217,13 @@ void PPFRegistration::compute() {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
     scene_reference_point_sampling_rate,cout,cnt) private(p1, p2, n1, n2, delta,       \
-                                                 feature, data) default(none) \
+                                                 data) default(none) \
     num_threads(15)
     for (auto j = 0; j < scene_cloud_with_normal->points.size(); ++j) {
       if (i == j) {
         continue;
       } else {
-        // triple_scene.reset();
+
         p1 << scene_cloud_with_normal->points[i].x,
             scene_cloud_with_normal->points[i].y,
             scene_cloud_with_normal->points[i].z;
@@ -243,39 +242,15 @@ void PPFRegistration::compute() {
         if (f4 > d_obj) {
           continue;
         }
-        /*
-        if(f4<250)
-        {
-          continue;
-        }*/
-        // normalize
         delta /= f4;
-/*
-        float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
 
-        float f2 = n1[0] * delta[0] + n2[1] * delta[1] + n2[2] * delta[2];
 
-        float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
-
- */
         float f1 = atan2(delta.cross(n1).norm(),delta.dot(n1));
 
         float f2 = atan2(delta.cross(n2).norm(),delta.dot(n2));
 
         float f3 = atan2(n1.cross(n2).norm(),n1.dot(n2));
-        /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  *
-        delta.z();
 
-        float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  *
-        delta.z();
-
-        float f3 = n1.x() * n2.x() + n1.y()  * n2.y()  + n1.z()  * n2.z() ;
-         */
-        feature.f1 = f1;
-        feature.f2 = f2;
-        feature.f3 = f3;
-        feature.f4 = f4;
-        feature.alpha_m = 0.0f;
         data.second.Or = (std::make_pair(
             n1.cross(delta) / (n1.cross(delta)).norm(),
             std::make_pair(
