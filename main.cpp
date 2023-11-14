@@ -25,7 +25,10 @@ int main(int argc, char** argv) {
   std::cout << argv[1] << " " << argv[2] << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr mix(new pcl::PointCloud<pcl::PointXYZ>());
   Eigen::Matrix4f T;
-  T << 1, 0, 0, 115, 0, 1, 0, 88, 0, 0, 1, 0, 0, 0, 0, 1;
+  T << 1, 0, 0, -94,
+      0, 1, 0, -428,
+      0, 0, 1, -140,
+      0, 0, 0, 1;
   Eigen::Affine3f T_(T);
   pcl::PointCloud<pcl::PointXYZ>::Ptr model_(
       new pcl::PointCloud<pcl::PointXYZ>());
@@ -45,7 +48,7 @@ int main(int argc, char** argv) {
 
   handle.setDownSampleStep(a);
   handle.setAngleThreshold(b);
-  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(8.0f, 8.0f, 8.0f, 0.0f));
+  handle.setSimpleDownSampleLeaf(Eigen::Vector4f(4.0f, 4.0f, 4.0f, 0.0f));
   handle.setAdaptiveDownSampleOption(false, 20000, 4.0f);
   //handle.test();
   handle.Solve();

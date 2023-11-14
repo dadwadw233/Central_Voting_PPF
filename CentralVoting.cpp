@@ -113,6 +113,7 @@ void CentralVoting::Solve() {
   std::vector<pcl::PointCloud<pcl::PointNormal>::Ptr> cloud_models_with_normal;
   std::vector<PPF::searchMapType> hashmap_search_vector;
   std::cout << "model降采样开始： " << std::endl;
+  std::cout << "model数量："<<this->model_set.size()<<std::endl;
   for (auto i = 0; i < this->model_set.size(); i++) {
     //auto model_cloud = SimpleDownSample(model_set[i]);
     pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal =
@@ -230,14 +231,21 @@ void CentralVoting::test() {
     scene_ = SimpleDownSample(this->scene);
   }
 */
-  pcl::PointCloud<pcl::PointNormal>::Ptr model_with_normal = DownSample(model_set[0]);
+  auto model_with_normal = DownSample(model_set[0]);
   pcl::visualization::PCLVisualizer view("subsampled point cloud");
   view.setBackgroundColor(0, 0, 0);
+
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
       model_with_normal, 255, 0, 0);
   view.addPointCloud(model_with_normal, red, "cloud");
   view.addPointCloudNormals<pcl::PointNormal>(model_with_normal, 10, 0.5,
                                               "cloud with normal");
+
+  /*
+   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+      model_with_normal, 255, 0, 0);
+  view.addPointCloud(model_with_normal, red, "cloud");
+*/
   while (!view.wasStopped()) {
     view.spinOnce(100);
     boost::this_thread::sleep(boost::posix_time::microseconds(1000));
