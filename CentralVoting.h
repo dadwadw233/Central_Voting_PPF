@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 #include "Eigen/Core"
-#include "HashMap.h"
+
 #include "pcl/console/print.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_representation.h"

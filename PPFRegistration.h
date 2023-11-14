@@ -6,6 +6,7 @@
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl/registration/registration.h"
+#include "common.h"
 #ifndef CENTRAL_VOTING_PPFREGISTRATION_H
 #define CENTRAL_VOTING_PPFREGISTRATION_H
 
@@ -30,7 +31,7 @@ class PPFRegistration {
   void setRotationClusteringThreshold(
       const float &clustering_rotation_diff_threshold);
 
-  void setSearchMap(const Hash::HashMap::Ptr &searchMap);
+  void setSearchMap(PPF::searchMapType& searchMap);
 
   void setInputSource(const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud);
 
@@ -161,7 +162,7 @@ class PPFRegistration {
   pcl::PointCloud<pcl::PointNormal>::Ptr scene_cloud_with_normal;
   Eigen::Affine3f finalTransformation;
   Eigen::Matrix4f gt{};
-  Hash::HashMap::Ptr searchMap;
+  PPF::searchMapType searchMap;
   std::vector<pcl::PointXYZ> triple_set;
   float angle_discretization_step;
   float distance_discretization_step;

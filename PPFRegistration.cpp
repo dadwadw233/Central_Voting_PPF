@@ -8,7 +8,6 @@
 PPFRegistration::PPFRegistration() {
   model_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
   scene_cloud_with_normal.reset(new pcl::PointCloud<pcl::PointNormal>());
-  searchMap.reset(new Hash::HashMap());
 }
 void PPFRegistration::setSceneReferencePointSamplingRate(
     const float &scene_reference_point_sampling_rate) {
@@ -33,7 +32,7 @@ void PPFRegistration::setInputSource(
     const pcl::PointCloud<pcl::PointNormal>::Ptr &cloud) {
   this->model_cloud_with_normal = cloud;
 }
-void PPFRegistration::setSearchMap(const Hash::HashMap::Ptr &searchMap) {
+void PPFRegistration::setSearchMap(PPF::searchMapType& searchMap) {
   this->searchMap = searchMap;
 }
 void PPFRegistration::setDiscretizationSteps(
@@ -202,7 +201,6 @@ void PPFRegistration::compute() {
   auto z_num = static_cast<long long int>(
       std::ceil(zr / this->clustering_position_diff_threshold));
 
-  pcl::PPFSignature feature{};
   std::pair<Hash::HashKey, Hash::HashData> data{};
   Eigen::Vector3f p1{};
   Eigen::Vector3f p2{};
@@ -219,13 +217,13 @@ void PPFRegistration::compute() {
 #pragma omp parallel for shared(                                              \
     x_num, y_num, z_num, zr, xr, yr, i, triple_scene,                         \
     scene_reference_point_sampling_rate,cout,cnt) private(p1, p2, n1, n2, delta,       \
-                                                 feature, data) default(none) \
+                                                 data) default(none) \
     num_threads(15)
     for (auto j = 0; j < scene_cloud_with_normal->points.size(); ++j) {
       if (i == j) {
         continue;
       } else {
-        // triple_scene.reset();
+
         p1 << scene_cloud_with_normal->points[i].x,
             scene_cloud_with_normal->points[i].y,
             scene_cloud_with_normal->points[i].z;
@@ -238,45 +236,19 @@ void PPFRegistration::compute() {
         n2 << scene_cloud_with_normal->points[j].normal_x,
             scene_cloud_with_normal->points[j].normal_y,
             scene_cloud_with_normal->points[j].normal_z;
-
-        delta = p2 - p1;
+        delta = p2 - p1;  // pt-pr
         float f4 = delta.norm();
-        if (f4 > d_obj) {
+        if (f4 > this->d_obj) {
           continue;
         }
-        /*
-        if(f4<250)
-        {
-          continue;
-        }*/
-        // normalize
-        delta /= f4;
-/*
-        float f1 = n1[0] * delta[0] + n1[1] * delta[1] + n1[2] * delta[2];
+        delta.normalize();
 
-        float f2 = n1[0] * delta[0] + n2[1] * delta[1] + n2[2] * delta[2];
+        float f1 = atan2(delta.cross(n1).norm(), delta.dot(n1));
 
-        float f3 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
+        float f2 = atan2(delta.cross(n2).norm(), delta.dot(n2));
 
- */
-        float f1 = atan2(delta.cross(n1).norm(),delta.dot(n1));
+        float f3 = atan2(n1.cross(n2).norm(), n1.dot(n2));
 
-        float f2 = atan2(delta.cross(n2).norm(),delta.dot(n2));
-
-        float f3 = atan2(n1.cross(n2).norm(),n1.dot(n2));
-        /*float f1 = n1.x() * delta.x() + n1.y()  * delta.y() + n2.z()  *
-        delta.z();
-
-        float f2 = n1.x() * delta.x() + n2.y()  * delta.y() + n2.z()  *
-        delta.z();
-
-        float f3 = n1.x() * n2.x() + n1.y()  * n2.y()  + n1.z()  * n2.z() ;
-         */
-        feature.f1 = f1;
-        feature.f2 = f2;
-        feature.f3 = f3;
-        feature.f4 = f4;
-        feature.alpha_m = 0.0f;
         data.second.Or = (std::make_pair(
             n1.cross(delta) / (n1.cross(delta)).norm(),
             std::make_pair(
@@ -300,10 +272,10 @@ void PPFRegistration::compute() {
 
         data.second.r = scene_cloud_with_normal->points[i];
         data.second.t = scene_cloud_with_normal->points[j];
-        if (searchMap->find(data.first)) {
+        if (!searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].empty()) {
 
-          auto model_lrf = this->searchMap->getData(data.first);
-          auto same_k = this->searchMap->getSameKeyNum(data.first);
+          auto model_lrf = searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].begin();
+          auto same_k = searchMap[data.first.k4][data.first.k1][data.first.k2][data.first.k3].size();
 
 
           for(size_t i = 0;i<same_k;++i){
@@ -314,16 +286,16 @@ void PPFRegistration::compute() {
             Eigen::Matrix3f scene_lrf_Or;
             Eigen::Matrix3f scene_lrf_Ot;
 
-            model_lrf_Or << model_lrf->second.Or.first[0], model_lrf->second.Or.second.first[0],
-                model_lrf->second.Or.second.second[0], model_lrf->second.Or.first[1],
-                model_lrf->second.Or.second.first[1], model_lrf->second.Or.second.second[1],
-                model_lrf->second.Or.first[2], model_lrf->second.Or.second.first[2],
-                model_lrf->second.Or.second.second[2];
-            model_lrf_Ot << model_lrf->second.Ot.first[0], model_lrf->second.Ot.second.first[0],
-                model_lrf->second.Ot.second.second[0], model_lrf->second.Ot.first[1],
-                model_lrf->second.Ot.second.first[1], model_lrf->second.Ot.second.second[1],
-                model_lrf->second.Ot.first[2], model_lrf->second.Ot.second.first[2],
-                model_lrf->second.Ot.second.second[2];
+            model_lrf_Or << model_lrf->Or.first[0], model_lrf->Or.second.first[0],
+                model_lrf->Or.second.second[0], model_lrf->Or.first[1],
+                model_lrf->Or.second.first[1], model_lrf->Or.second.second[1],
+                model_lrf->Or.first[2], model_lrf->Or.second.first[2],
+                model_lrf->Or.second.second[2];
+            model_lrf_Ot << model_lrf->Ot.first[0], model_lrf->Ot.second.first[0],
+                model_lrf->Ot.second.second[0], model_lrf->Ot.first[1],
+                model_lrf->Ot.second.first[1], model_lrf->Ot.second.second[1],
+                model_lrf->Ot.first[2], model_lrf->Ot.second.first[2],
+                model_lrf->Ot.second.second[2];
             scene_lrf_Or << data.second.Or.first[0],
                 data.second.Or.second.first[0], data.second.Or.second.second[0],
                 data.second.Or.first[1], data.second.Or.second.first[1],
@@ -341,8 +313,8 @@ void PPFRegistration::compute() {
 
             Eigen::Vector4f t_1{};
             Eigen::Vector4f t_2{};
-            Eigen::Vector3f m_1{model_lrf->second.r.x, model_lrf->second.r.y, model_lrf->second.r.z};
-            Eigen::Vector3f m_2{model_lrf->second.t.x, model_lrf->second.t.y, model_lrf->second.t.z};
+            Eigen::Vector3f m_1{model_lrf->r.x, model_lrf->r.y, model_lrf->r.z};
+            Eigen::Vector3f m_2{model_lrf->t.x, model_lrf->t.y, model_lrf->t.z};
 
             //m_1 = R_1 * m_1;
             //m_2 = R_1 * m_2;

@@ -32,7 +32,7 @@ add_executable(central_voting
         HashMap.cpp
         HashMap.h
         PPFRegistration.cpp PPFRegistration.h
-        add_gauss_noise.cpp add_gauss_noise.h)
+        add_gauss_noise.cpp add_gauss_noise.h common.h)
 
 target_link_libraries(central_voting ${PCL_LIBRARIES} tbb)
 

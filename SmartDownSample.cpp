@@ -9,7 +9,11 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
             << std::endl;
   pcl::PointCloud<pcl::Normal>::Ptr normal(new pcl::PointCloud<pcl::Normal>());
   //计算所有点的表面法线
+  std::cout << "开始全量计算法线: " << this->input_cloud->points.size()
+            << std::endl;
   pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> normal_estimation_filter;
+  std::cout << "法线计算结束: " << this->input_cloud->points.size()
+            << std::endl;
   normal_estimation_filter.setInputCloud(this->input_cloud);
   pcl::search::KdTree<pcl::PointXYZ>::Ptr search_tree(
       new pcl::search::KdTree<pcl::PointXYZ>);  ////建立kdtree来进行近邻点集搜索
@@ -95,8 +99,8 @@ pcl::PointCloud<pcl::PointNormal>::Ptr SmartDownSample::compute() {
     if (map[i]->points.empty()) {         // cell为空
       continue;
     } else if (map[i]->points.size() == 1 && isdense) {  // cell中只有一个点
-#pragma omp critical
-      output_cloud->points.push_back(map[i]->points[0]);
+//#pragma omp critical
+      //output_cloud->points.push_back(map[i]->points[0]);
       continue;
     } else {  // cell中有多个点
       std::vector<std::vector<pcl::PointNormal>> cluster;
