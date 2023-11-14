@@ -14,7 +14,11 @@ int main(int argc, char** argv) {
     return -1;
   }
   float a,b;
-  cin>>a>>b;
+  cout<<"Input downsample step (for 16GB RAM, 20 is recommended):"<<endl;
+  cin>>a;
+  cout<<"Input downsample angle threshold (for 16GB RAM 20 is recommended):"<<endl;
+  cin>>b;
+  //cin>>a>>b;
   pcl::PointCloud<pcl::PointXYZ>::Ptr model(
       new pcl::PointCloud<pcl::PointXYZ>());
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene(
