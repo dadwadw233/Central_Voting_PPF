@@ -76,7 +76,7 @@ class CentralVoting {
   pcl::PointCloud<pcl::PointXYZ>::Ptr SimpleDownSample(
       pcl::PointCloud<pcl::PointXYZ>::Ptr &input_cloud);
 
-  void Solve();
+  std::vector<Eigen::Affine3f> Solve();
 
   void test();  //测试入口函数
 

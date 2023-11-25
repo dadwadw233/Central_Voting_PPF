@@ -183,7 +183,7 @@ float calculateDistance(T &pointA, T &pointB) {
   return sqrt(pow(pointA[0] - pointB[0], 2) + pow(pointA[1] - pointB[1], 2) +
               pow(pointA[2] - pointB[2], 2));
 }
-void PPFRegistration::compute() {
+std::vector<Eigen::Affine3f> PPFRegistration::compute() {
   // pcl::PointCloud<pcl::PointXYZ>::Ptr triple_scene =
   // boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   establishVoxelGrid();
@@ -470,6 +470,7 @@ void PPFRegistration::compute() {
 
   std::cout<<"scene中共匹配"<<cnt<<"对PPF特征"<<std::endl;
   //int success = 0;
+  std::vector<Eigen::Affine3f>results;
   key_ final_key(-1, -1, -1);
   int max_vote = 0;
   if (this->map_.empty()) {
@@ -494,7 +495,7 @@ void PPFRegistration::compute() {
 
       Eigen::Affine3f temp_(T_mean);
 
-      struct data node(temp_, cnt+i.second.value);//提高假设检验后投票占比
+      struct data node(temp_, cnt + i.second.value);//提高假设检验后投票占比
       T_queue.push(node);
       if (i.second.value > max_vote) {
         max_vote = i.second.value;
@@ -519,28 +520,29 @@ void PPFRegistration::compute() {
               << std::endl;
 
     /****************/
-/*
-    pcl::visualization::PCLVisualizer view("subsampled point cloud");
-    view.setBackgroundColor(0, 0, 0);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
-        scene_cloud_with_normal, 255, 255, 255);
-    view.addPointCloud(scene_cloud_with_normal, white, "scene");
-    std::string name = "result";
-    for(int i = 0;i<10;i++){
-      pcl::PointCloud<pcl::PointNormal>::Ptr result = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
-      pcl::transformPointCloud(*model_cloud_with_normal, *result, T_queue.top().T);
 
-      pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
-          result, 255, 0, 0);
-      view.addPointCloud(result, red,name);
-      name+="result";
+    std::cout<<"Size: "<<T_queue.size()<<endl;
+//    pcl::visualization::PCLVisualizer view("subsampled point cloud");
+//    view.setBackgroundColor(0, 0, 0);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> white(
+//        scene_cloud_with_normal, 255, 255, 255);
+//    view.addPointCloud(scene_cloud_with_normal, white, "scene");
+//    std::string name = "result";
+    while(!T_queue.empty()){
+//      pcl::PointCloud<pcl::PointNormal>::Ptr result = boost::make_shared<pcl::PointCloud<pcl::PointNormal>>();
+//      pcl::transformPointCloud(*model_cloud_with_normal, *result, T_queue.top().T);
+      results.emplace_back(T_queue.top().T);
+//      pcl::visualization::PointCloudColorHandlerCustom<pcl::PointNormal> red(
+//          result, 255, 0, 0);
+//      view.addPointCloud(result, red,name);
+//      name+="result";
       T_queue.pop();
     }
-    while (!view.wasStopped()) {
-      view.spinOnce(100);
-      boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-    }
-*/
+//    while (!view.wasStopped()) {
+//      view.spinOnce(100);
+//      boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+//    }
+
   }
 
   /**generate cluster **/
@@ -580,4 +582,5 @@ void PPFRegistration::compute() {
       boost::this_thread::sleep(boost::posix_time::microseconds(1000));
     }
 */
+  return results;
 }
