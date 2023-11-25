@@ -14,7 +14,7 @@ class PPFRegistration {
  public:
   PPFRegistration();
 
-  void compute();
+  std::vector<Eigen::Affine3f> compute();
 
   Eigen::Affine3f getFinalTransformation();
 

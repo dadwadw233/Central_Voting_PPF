@@ -100,7 +100,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr CentralVoting::DownSample(
   sample_filter.setKSearch(this->k_point);
   return sample_filter.compute();
 }
-void CentralVoting::Solve() {
+std::vector<Eigen::Affine3f> CentralVoting::Solve() {
     std::cout << "scene降采样开始： " << std::endl;
     this->scene_subsampled = DownSample(scene);
    //this->scene_subsampled = subsampleAndCalculateNormals(scene);
@@ -167,11 +167,12 @@ void CentralVoting::Solve() {
     hashmap_search_vector.push_back(PPF_map_);
   }
 
-  pcl::visualization::PCLVisualizer view("registration result");
-  view.setBackgroundColor(0, 0, 0);
+//  pcl::visualization::PCLVisualizer view("registration result");
+//  view.setBackgroundColor(0, 0, 0);
   PCL_INFO("registration阶段开始\n");
 
   Eigen::Matrix4f GT{};
+  std::vector<Eigen::Affine3f> results;
   GT<<0.999126, 0.0369223, 0.0196902, -100.672,
             -0.0372036, 0.999209, 0.0140794, 171.854,
             -0.0191553, -0.014799, 0.999706, -16.0715,
@@ -180,45 +181,47 @@ void CentralVoting::Solve() {
   for (std::size_t model_i = 0; model_i < model_set.size(); ++model_i) {
     PPFRegistration ppf_registration{};
     ppf_registration.setSceneReferencePointSamplingRate(10);
-    ppf_registration.setPositionClusteringThreshold(20);  //投票的体素网格的size
-    ppf_registration.setRotationClusteringThreshold(6.0f / 180.0f *
+    ppf_registration.setPositionClusteringThreshold(0.05);  //投票的体素网格的size
+    ppf_registration.setRotationClusteringThreshold(12.0f / 180.0f *
                                                     float(M_PI));
     ppf_registration.setSearchMap(hashmap_search_vector[model_i]);
     ppf_registration.setInputSource(cloud_models_with_normal[model_i]);
     ppf_registration.setInputTarget(this->scene_subsampled);
     ppf_registration.setModelTripleSet(this->triple_set[model_i]);
     ppf_registration.setDobj(this->d_obj_set[model_i]);
-    ppf_registration.setDiscretizationSteps(6.0f / 180.0f * float(M_PI),
+    ppf_registration.setDiscretizationSteps(12.0f / 180.0f * float(M_PI),
                                             0.05f);
     ppf_registration.setGroundTruthTransform(GT);
     tp1 = std::chrono::steady_clock::now();
 
-    ppf_registration.compute();
+    results = ppf_registration.compute();
     PCL_INFO("registration阶段完成\n");
     Eigen::Affine3f T = ppf_registration.getFinalTransformation();
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(
-        new pcl::PointCloud<pcl::PointXYZ>());
-    pcl::transformPointCloud(*this->model_set[model_i], *output_model, T);
-
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
-        output_model, 255, 0, 0);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> white(
-        this->scene, 255, 255, 255);
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> s(
-        this->model_set[model_i], 0, 255, 0);
-    // view.addPointCloud(model_set[model_i], s, "model");
-    view.addPointCloud(output_model, red, "out");
-    view.addPointCloud(this->scene, white, "scene");
+//    pcl::PointCloud<pcl::PointXYZ>::Ptr output_model(
+//        new pcl::PointCloud<pcl::PointXYZ>());
+//    pcl::transformPointCloud(*this->model_set[model_i], *output_model, T);
+//
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> red(
+//        output_model, 255, 0, 0);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> white(
+//        this->scene, 255, 255, 255);
+//    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> s(
+//        this->model_set[model_i], 0, 255, 0);
+//    // view.addPointCloud(model_set[model_i], s, "model");
+//    view.addPointCloud(output_model, red, "out");
+//    view.addPointCloud(this->scene, white, "scene");
   }
   auto tp2 = std::chrono::steady_clock::now();
   std::cout << "\nneed "
             << std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1)
                    .count()
             << "ms for online process" << std::endl;
-  while (!view.wasStopped()) {
-    view.spinOnce(100);
-    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
-  }
+//  while (!view.wasStopped()) {
+//    view.spinOnce(100);
+//    boost::this_thread::sleep(boost::posix_time::microseconds(1000));
+//  }
+
+  return results;
 }
 
 void CentralVoting::test() {
