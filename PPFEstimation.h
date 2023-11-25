@@ -50,7 +50,8 @@ class PPFEstimation {
                 input_point_normal->points[j].normal_z;
             delta = p2 - p1;  // pt-pr
             float f4 = delta.norm();
-            if (f4 > dobj) {
+
+            if (f4 > dobj / 2 || f4 < dobj/10) {
               continue;
             }
             delta.normalize();

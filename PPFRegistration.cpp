@@ -238,7 +238,7 @@ std::vector<Eigen::Affine3f> PPFRegistration::compute() {
             scene_cloud_with_normal->points[j].normal_z;
         delta = p2 - p1;  // pt-pr
         float f4 = delta.norm();
-        if (f4 > this->d_obj) {
+        if (f4 > this->d_obj/2 || f4<d_obj/10 ) {
           continue;
         }
         delta.normalize();
@@ -479,7 +479,7 @@ std::vector<Eigen::Affine3f> PPFRegistration::compute() {
     std::vector<std::pair<key_, data_>>v(map_.begin(), map_.end());
     std::sort(v.begin(), v.end(),[](std::pair<key_,data_>a, std::pair<key_,data_>b){return a.second.value>b.second.value;});
     for (const auto &i : v) {
-      if(i.second.value<=v[0].second.value/1.2) continue;
+      if(i.second.value<=v[0].second.value/2 || i.second.value<10) continue;
       /*for(const auto &j:i.second.T_set){
         double RE,TE;
         if(evaluation_est(j.matrix(),this->gt,15,20,RE,TE)){
