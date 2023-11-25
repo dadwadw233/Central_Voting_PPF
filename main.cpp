@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   //handle.test();
   auto result = handle.Solve();
   std::cout<<"预测出的结果数量： "<<result.size()<<endl;
-  auto filename = output_path + "/results.txt";
+  auto filename = output_path + "/central_voting_results.txt";
   std::ofstream file(filename);
 
   if (!file.is_open()) {
