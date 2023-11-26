@@ -138,20 +138,21 @@ class PPFRegistration {
   float calculateDistance(T &pointA, T &pointB);
 
   decltype(auto) getMeanMatrix(const data_ &data) {
-    Eigen::Quaternionf averQ {};
-    averQ.x() = data.sumQ.x()/ data.value;
-    averQ.y() = data.sumQ.y()/ data.value;
-    averQ.z() = data.sumQ.z()/ data.value;
-    averQ.w() = data.sumQ.w()/ data.value;
-    Eigen::Vector3f t = data.sumt/data.value;
-    Eigen::Affine3f R{averQ};
+    Eigen::Quaternionf sumQ = data.sumQ; // 假设 sumQ 是累加的四元数
+    Eigen::Vector3f sumt = data.sumt;    // 假设 sumt 是累加的平移向量
+
+    sumQ.normalize();
+
+    Eigen::Vector3f t = sumt / data.value; // 计算平均平移向量
+    Eigen::Affine3f R{sumQ}; // 创建 Affine3f 从归一化后的四元数
     Eigen::Matrix4f result{};
-    result<<R.rotation()(0,0),R.rotation()(0,1),R.rotation()(0,2),t[0],
-        R.rotation()(1,0),R.rotation()(1,1),R.rotation()(1,2),t[1],
-        R.rotation()(2,0),R.rotation()(2,1),R.rotation()(2,2),t[2],
-        0,0,0,1;
+    result << R.rotation()(0, 0), R.rotation()(0, 1), R.rotation()(0, 2), t[0],
+        R.rotation()(1, 0), R.rotation()(1, 1), R.rotation()(1, 2), t[1],
+        R.rotation()(2, 0), R.rotation()(2, 1), R.rotation()(2, 2), t[2],
+        0, 0, 0, 1;
     return result;
   }
+
   float scene_reference_point_sampling_rate{};
   float clustering_position_diff_threshold{};
   float clustering_rotation_diff_threshold{};

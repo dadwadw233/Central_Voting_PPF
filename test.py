@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-root = '../../PPF_Dataset/test_data/synthetic'  # or real
+root = '../../PPF_Dataset/test_data/real'  # or real
 
 dirs = os.listdir(root)
 
