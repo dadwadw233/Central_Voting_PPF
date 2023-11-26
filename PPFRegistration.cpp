@@ -479,7 +479,7 @@ std::vector<Eigen::Affine3f> PPFRegistration::compute() {
     std::vector<std::pair<key_, data_>>v(map_.begin(), map_.end());
     std::sort(v.begin(), v.end(),[](std::pair<key_,data_>a, std::pair<key_,data_>b){return a.second.value>b.second.value;});
     for (const auto &i : v) {
-      if(i.second.value<=v[0].second.value/2 || i.second.value<10) continue;
+      if(i.second.value<=v[0].second.value/2.0 || i.second.value<10) continue;
       /*for(const auto &j:i.second.T_set){
         double RE,TE;
         if(evaluation_est(j.matrix(),this->gt,15,20,RE,TE)){
